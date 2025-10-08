@@ -15,8 +15,9 @@ def adicionar_produto():
     }).execute()
     print("Produto adicionado")
 
-#def listar_produtos():
-     
+def listar_produtos():
+    response = supabase.table("produtos").select("*").execute()
+    print(response.data)
 
 print("Funções: ")
 print("1 -> Adicionar produtos")
@@ -25,3 +26,6 @@ funcao = int(input("Que função quer fazer na tabela produtos(insira o número)
 match funcao:
         case 1:
             adicionar_produto()
+        
+        case 2:
+          listar_produtos()
