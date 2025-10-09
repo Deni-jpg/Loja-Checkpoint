@@ -35,13 +35,17 @@ def listar_produtos_com_stock_baixo():
     response = (
     supabase.table("produtos").select('nome','stock').lt('stock',3).execute()
     )
-    print(response.data)
+    if response.data:
+        for produto in response.data:
+            print(produto)
 
 def lista_produtos_mais_vendidos():
     response = (
         supabase.table("produtos").select('nome','vendas').limit(3).order('vendas', desc=True).execute()
     )
-    print(response.data)
+    if response.data:
+        for produto in response.data:
+            print(produto)
 
 def remover_produto(produto_id):
     #Código por fazer
@@ -49,7 +53,9 @@ def remover_produto(produto_id):
     
 def listar_produtos():
     response = supabase.table("produtos").select("*").execute()
-    print(response.data)
+    if response.data:
+        for produto in response.data:
+            print(produto)
 
 print("Funções: ")
 print("1 -> Adicionar produtos")
