@@ -47,8 +47,14 @@ def lista_produtos_mais_vendidos():
         for produto in response.data:
             print(produto)
 
-def remover_produto(produto_id):
-    #Código por fazer
+def remover_produto():
+    produto_id = int(input("Qual o ID do produto: "))
+    response = (
+        supabase.table("produtos")
+        .delete()
+        .eq("id", produto_id)
+        .execute()
+    )
     print("Produto removido com sucesso.")
     
 def listar_produtos():
