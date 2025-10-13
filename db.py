@@ -8,6 +8,6 @@ url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_KEY")
 
 if not url or not key:
-    raise Exception("Missing Supabase credentials in .env")
+    raise Exception("Credenciais do Supabase em falta no .env")
 
 supabase: Client = create_client(url, key)
