@@ -72,7 +72,7 @@ print("5 -> Listar os 3 produtos mais vendidos")
 funcao = int(input("Que função quer fazer na tabela produtos(insira o número): "))
 match funcao:
         case 1:
-            adicionar_produto()
+          adicionar_produto()
         
         case 2:
           listar_produtos()
