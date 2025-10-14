@@ -47,7 +47,13 @@ def editar_cliente(cliente_id):
     print("Cliente editado com sucesso.")
 
 def remover_cliente(cliente_id):
-    #Código por fazer
+    cliente_id = input("Digite o id do cliente: ")
+    response = (
+        supabase.table("clientes")
+        .delete()
+        .eq("id", cliente_id)
+        .execute() 
+    )
     print("Cliente removido com sucesso.")
 
 def listar_clientes():
