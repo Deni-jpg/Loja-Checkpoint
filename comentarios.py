@@ -42,6 +42,13 @@ def fazer_login_admin():
 
 
 def fazer_comentario(user_id):
+    autor = input("Digite seu nome: ")
+    texto = input("\nEscreva seu comentário: ")
+
+    supabase.table("comentarios").insert({
+        "autor": autor,
+        "texto": texto
+    }).execute()
     print("Por fazer")
 
 def julgar_comentario():
