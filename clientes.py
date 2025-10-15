@@ -25,15 +25,22 @@ def registar_cliente():
 
 
 def login_cliente():
-    email = input("Email: ")
+    email = input("Email do utilizador: ")
     password = getpass.getpass("Password: ")
-    res = supabase.table("clientes").select("*").eq("email", email).eq("password", password).execute()
-    if res.data:
-        cliente = res.data[0]
-        print(f"👋 Bem-vindo, {cliente['nome']}!")
-        return cliente
+
+    res = supabase.table("clientes").select("id", "password").eq("email", email).execute()
+    if not res.data:
+        print("Cliente não encontrado.")
+        return None
+
+    user = res.data[0]
+    hashed = user["password"]
+
+    if bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8')):
+        print("Login bem-sucedido.")
+        return user["id"]
     else:
-        print("❌ Credenciais inválidas.")
+        print("Password incorreta.")
         return None
 
 def editar_cliente(cliente_id):
@@ -106,8 +113,7 @@ if tipo == 1:
     if funcao == 1:
         registar_cliente()
     elif funcao == 2:
-        cliente_id = int(input("ID do cliente a editar: "))
-        editar_cliente(cliente_id)
+        login_cliente()
 
 elif tipo == 2:
     admin_id = login_admin()
