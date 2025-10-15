@@ -67,8 +67,9 @@ print("Funções: ")
 print("1 -> Adicionar produtos")
 print("2 -> Listar produtos")
 print("3 -> Editar produtos")
-print("4 -> Listar produtos que precisam ser repostos")
-print("5 -> Listar os 3 produtos mais vendidos")
+print("4 -> Deletar produtos")
+print("5 -> Listar produtos que precisam ser repostos")
+print("6 -> Listar os 3 produtos mais vendidos")
 funcao = int(input("Que função quer fazer na tabela produtos(insira o número): "))
 match funcao:
         case 1:
@@ -79,9 +80,12 @@ match funcao:
 
         case 3:
           atualizar_produto()
-        
+
         case 4:
-          listar_produtos_com_stock_baixo()
+          remover_produto()
         
         case 5:
+          listar_produtos_com_stock_baixo()
+        
+        case 6:
           lista_produtos_mais_vendidos()
