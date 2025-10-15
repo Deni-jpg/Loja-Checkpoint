@@ -64,8 +64,12 @@ def remover_cliente(cliente_id):
     print("Cliente removido com sucesso.")
 
 def listar_clientes():
-    #Código por fazer
-    print("Clientes listados:")
+    response = (
+        supabase.table("clientes")
+        .select("*")
+        .execute()
+    )
+    print("Clientes listados:", response)
 
 def criar_admin():
     nome = input("Nome do admin: ")
