@@ -64,12 +64,12 @@ def remover_cliente(cliente_id):
     print("Cliente removido com sucesso.")
 
 def listar_clientes():
-    response = (
-        supabase.table("clientes")
-        .select("*")
-        .execute()
-    )
-    print("Clientes listados:", response)
+    response = supabase.table("clientes").select('id', 'nome', 'email', 'criado_em').execute()
+
+    if response.data:
+        clientes = response.data
+        for i, cliente in enumerate(clientes, start=1):
+            print(f"{i}. Nome: {cliente['nome']} - Email: {cliente['email']} - criado em: {cliente['criado_em']}")
 
 def criar_admin():
     nome = input("Nome do admin: ")
