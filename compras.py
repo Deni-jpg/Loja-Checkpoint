@@ -49,7 +49,7 @@ def fazer_compra(user_id):
     if response.data:
         produtos = response.data
         for i, produto in enumerate(produtos, start=1):
-            print(f"{i}. {produto['nome']} ({produto['plataforma']}) - €{produto['preco']:.2f} | Stock: {produto['stock']}")
+            print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']}")
 
         # Escolha do utilizador
         escolha = input("\nDigite o número do produto que deseja comprar: ")
