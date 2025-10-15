@@ -60,8 +60,9 @@ def remover_produto():
 def listar_produtos():
     response = supabase.table("produtos").select("*").execute()
     if response.data:
-        for produto in response.data:
-            print(produto)
+        produtos = response.data
+        for i, produto in enumerate(produtos, start=1):
+            print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']}")
 
 print("Funções: ")
 print("1 -> Adicionar produtos")
