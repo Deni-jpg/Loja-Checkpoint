@@ -15,7 +15,7 @@ def fazer_login_cliente():
     hashed = user["password"]
 
     if bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8')):
-        print("Login bem-sucedido, pode continuar para o menu de compras.")
+        print("Login bem-sucedido, pode continuar para o menu de comentários.")
         return user["id"]
     else:
         print("Password incorreta.")
@@ -47,17 +47,27 @@ def fazer_comentario(user_id):
 
     supabase.table("comentarios").insert({
         "autor": autor,
-        "texto": texto
+        "texto": texto,
+        "aprovado": False
     }).execute()
-    print("Por fazer")
+    print("Comentário adicionado!")
 
 def julgar_comentario():
-    print("Por fazer")
+
+    response = (
+        supabase.table("comentarios")
+        .select("*")
+        .execute()
+    )
+    print(response)
 
 def listar_comentario_por_produto():
     print("Por fazer")
 
 def remover_comentario():
+    autor = input("Digite o autor do comentário: ")
+
+    supabase.table("comentarios").delete().eq()
     print("Por fazer")
 
 print("Fazer login para aceder o menu comentários: \n")
