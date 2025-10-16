@@ -178,7 +178,9 @@ def main_menu():
             continue
 
         run_script(filename)
-        input(color(f"\n{TEXTS['back']}", THEME_COLORS[theme]["prompt"]))
+        
+        if escolha != "4":
+            input(color(f"\n{TEXTS['back']}", THEME_COLORS[theme]["prompt"]))
 
 if __name__ == "__main__":
     main_menu()
