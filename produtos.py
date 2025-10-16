@@ -1,4 +1,6 @@
 from db import supabase
+import getpass
+import bcrypt
 
 def adicionar_produto():
     nome = input("Nome: ")
@@ -64,29 +66,52 @@ def listar_produtos():
         for i, produto in enumerate(produtos, start=1):
             print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']}")
 
-print("Funções: ")
-print("1 -> Adicionar produtos")
-print("2 -> Listar produtos")
-print("3 -> Editar produtos")
-print("4 -> Deletar produtos")
-print("5 -> Listar produtos que precisam ser repostos")
-print("6 -> Listar os 3 produtos mais vendidos")
-funcao = int(input("Que função quer fazer na tabela produtos(insira o número): "))
-match funcao:
-        case 1:
-          adicionar_produto()
-        
-        case 2:
-          listar_produtos()
+def login_admin():
+    email = input("Email do admin: ")
+    password = getpass.getpass("Password: ")
 
-        case 3:
-          atualizar_produto()
+    res = supabase.table("admins").select("id", "password").eq("email", email).execute()
+    if not res.data:
+        print("Admin não encontrado.")
+        return None
 
-        case 4:
-          remover_produto()
-        
-        case 5:
-          listar_produtos_com_stock_baixo()
-        
-        case 6:
-          lista_produtos_mais_vendidos()
+    admin = res.data[0]
+    hashed = admin["password"]
+
+    if bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8')):
+        print("Login bem-sucedido.")
+        return admin["id"]
+    else:
+        print("Password incorreta.")
+        return None
+    
+admin_id = login_admin()
+if admin_id:
+    print("\n✅ Acesso autorizado ao menu de administração.")
+
+    print("\nFunções: ")
+    print("1 -> Adicionar produtos")
+    print("2 -> Listar produtos")
+    print("3 -> Editar produtos")
+    print("4 -> Deletar produtos")
+    print("5 -> Listar produtos que precisam ser repostos")
+    print("6 -> Listar os 3 produtos mais vendidos")
+    funcao = int(input("Que função quer fazer na tabela produtos(insira o número): "))
+    match funcao:
+            case 1:
+                adicionar_produto()
+                
+            case 2:
+                listar_produtos()
+
+            case 3:
+                atualizar_produto()
+
+            case 4:
+                remover_produto()
+                
+            case 5:
+                listar_produtos_com_stock_baixo()
+                
+            case 6:
+                lista_produtos_mais_vendidos()
