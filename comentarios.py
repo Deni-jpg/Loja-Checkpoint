@@ -1,6 +1,15 @@
 from db import supabase
 import getpass
 import bcrypt
+from main import cliente_logado, TEXTS, THEME_COLORS, color, load_config
+
+config = load_config()
+theme = config["theme"]
+
+if not cliente_logado:
+    print("⚠️  Você precisa estar logado para acessar esta seção.")
+    input(color(f"{TEXTS['back']}", THEME_COLORS[theme]["prompt"]))
+    exit()
 
 def fazer_login_cliente():
     email = input("Email utilizador: ")
