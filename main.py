@@ -5,6 +5,8 @@ import time
 from pathlib import Path
 from itertools import cycle
 
+cliente_logado = False
+
 try:
     from colorama import Fore, Style, init
     init(autoreset=True)
@@ -91,14 +93,21 @@ def color(text, color_code):
 
 # Executa script
 def run_script(filename: str):
+    global cliente_logado
     path = BASE_DIR / filename
     if not path.exists():
         print(color(f"{TEXTS['not_found']}: {filename}", Fore.RED))
         return
+
     print(color(f"\n{TEXTS['running']} {filename}...\n", Fore.CYAN))
     try:
         subprocess.run([sys.executable, str(path)], check=False)
         print(color(f"\n{TEXTS['done']}", Fore.GREEN))
+
+        # se o script executado for o de login, marca como logado
+        if filename == "clientes.py":
+            cliente_logado = True
+
     except KeyboardInterrupt:
         print(color(f"\n{TEXTS['interrupted']}", Fore.YELLOW))
     except Exception as e:
@@ -117,6 +126,9 @@ def show_menu_header(theme, frame):
 def show_menu_options(theme):
     colors = THEME_COLORS[theme]
     for key, (label, _) in MODULE_MAP.items():
+        # esconde a opção de login se o cliente já estiver logado
+        if cliente_logado and key == "1":
+            continue
         emoji_color = colors["exit"] if key == "0" else colors["option"]
         star = " ⭐" if key == last_choice else ""
         print(color(f"{key}️⃣  {label}{star}", emoji_color))
