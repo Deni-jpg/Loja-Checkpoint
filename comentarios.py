@@ -6,10 +6,10 @@ from main import cliente_logado, TEXTS, THEME_COLORS, color, load_config
 config = load_config()
 theme = config["theme"]
 
-if not cliente_logado:
-    print("⚠️  Você precisa estar logado para acessar esta seção.")
-    input(color(f"{TEXTS['back']}", THEME_COLORS[theme]["prompt"]))
-    exit()
+#if not cliente_logado:
+#    print("⚠️  Você precisa estar logado para acessar esta seção.")
+#    input(color(f"{TEXTS['back']}", THEME_COLORS[theme]["prompt"]))
+#    exit()
 
 def fazer_login_cliente():
     email = input("Email utilizador: ")
@@ -53,13 +53,41 @@ def fazer_login_admin():
 def fazer_comentario(user_id):
     autor = input("Digite seu nome: ")
     texto = input("\nEscreva seu comentário: ")
+    produto = input("\nProduto: ")
+
+    response = supabase.table("produtos").select("id", "nome").ilike("nome", f"%{produto}%").execute()
+    produtos = response.data
+
+    if not produtos:
+        print("Produto não encontrado.")
+        return
+
+    # Se houver mais de um produto, mostrar opções
+    if len(produtos) > 1:
+        print("\nProdutos encontrados:")
+        for i, p in enumerate(produtos):
+            print(f"{i + 1}. {p['nome']}")
+
+        escolha = input("\nDigite o número do produto desejado: ")
+        try:
+            index = int(escolha) - 1
+            produto_id = produtos[index]["id"]
+        except (ValueError, IndexError):
+            print("Escolha inválida.")
+            return
+    else:
+        produto_id = produtos[0]["id"]
 
     supabase.table("comentarios").insert({
         "autor": autor,
         "texto": texto,
+        "produto_id": produto_id,
         "aprovado": False
     }).execute()
-    print("Comentário adicionado!")
+
+    print("Comentário adicionado com sucesso!")
+
+
 
 def julgar_comentario():
 
