@@ -44,12 +44,13 @@ def fazer_login_admin():
     
 def mostrar_produtos(produtos):
     for i, produto in enumerate(produtos, start=1):
-        print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']}")
+        print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']} | Vendas: {produto['vendas']}")
 
 def procurar_produtos():
     print("\n Procurar produtos")
     print("1 -> Por nome")
     print("2 -> Por plataforma")
+    print("3 -> Ver os 10 produtos mais vendidos")
     try:
         escolha = int(input("Escolha uma opção: "))
         if escolha == 1:
@@ -58,6 +59,8 @@ def procurar_produtos():
         elif escolha == 2:
             plataforma = input("Digite a plataforma: ")
             response = supabase.table("produtos").select("*").ilike("plataforma", f"%{plataforma}%").execute()
+        elif escolha == 3:
+            response = supabase.table("produtos").select("*").order("vendas", desc=True).limit(10).execute()
         else:
             print("Opção inválida.")
             return []
@@ -82,7 +85,22 @@ def listar_todos_produtos():
     else:
         print("Nenhum produto disponível.")
         return []
-    
+
+def historico_compras(user_id):
+    response = supabase.table("compras").select("produto_id", "data").eq("cliente_id", user_id).execute()
+    compras = response.data
+
+    if not compras:
+        print("Ainda não fez nenhuma compra.")
+        return
+
+    print("\nHistórico de compras:")
+    for c in compras:
+        produto_resp = supabase.table("produtos").select("nome").eq("id", c["produto_id"]).execute()
+        nome = produto_resp.data[0]["nome"] if produto_resp.data else "Desconhecido"
+        data_formatada = datetime.fromisoformat(c["data"]).strftime("%d/%m/%Y %H:%M")
+        print(f"Comprado em: {data_formatada}")
+
 def confirmar_compra(user_id, produto):
     print(f"\n Produto selecionado: {produto['nome']} ({produto['plataforma']})")
     print(f" Preço: {produto['preco']:.2f}€")
@@ -150,8 +168,17 @@ try:
     tipo = int(input("Escolha o tipo de utilizador: "))
     if tipo == 1:
         user_id = fazer_login_cliente()
+        print("\nMenu de Administração")
+        print("1 -> Fazer compras")
+        print("2 -> Ver histórico de compras")
         if user_id:
-            fazer_compra(user_id)
+            escolha = int(input("Opção: "))
+            if escolha == 1:
+                fazer_compra(user_id)
+            elif escolha == 2:
+                historico_compras(user_id)
+            else:
+                print("Opção inválida!!")
     elif tipo == 2:
         admin_id = fazer_login_admin()
         if admin_id:
