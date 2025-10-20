@@ -1,6 +1,13 @@
 from db import supabase
-import getpass
-import bcrypt
+import json
+import sys
+
+def carregar_sessao():
+    try:
+        with open("sessao.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return None
 
 def adicionar_produto():
     nome = input("Nome: ")
@@ -66,52 +73,38 @@ def listar_produtos():
         for i, produto in enumerate(produtos, start=1):
             print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']}")
 
-def login_admin():
-    email = input("Email do admin: ")
-    password = getpass.getpass("Password: ")
-
-    res = supabase.table("admins").select("id", "password").eq("email", email).execute()
-    if not res.data:
-        print("Admin não encontrado.")
-        return None
-
-    admin = res.data[0]
-    hashed = admin["password"]
-
-    if bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8')):
-        print("Login bem-sucedido.")
-        return admin["id"]
-    else:
-        print("Password incorreta.")
-        return None
     
-admin_id = login_admin()
-if admin_id:
-    print("\n✅ Acesso autorizado ao menu de administração.")
+user = carregar_sessao()
+if not user or user["tipo"] != "admin":
+    print("⛔ Acesso restrito. Apenas administradores podem gerir produtos.")
+    sys.exit()
 
-    print("\nFunções: ")
-    print("1 -> Adicionar produtos")
-    print("2 -> Listar produtos")
-    print("3 -> Editar produtos")
-    print("4 -> Deletar produtos")
-    print("5 -> Listar produtos que precisam ser repostos")
-    print("6 -> Listar os 3 produtos mais vendidos")
-    funcao = int(input("Que função quer fazer na tabela produtos(insira o número): "))
+print(f"\n✅ Bem-vindo {user['nome']} ao menu de administração de produtos.")
+
+print("\nFunções disponíveis:")
+print("1 -> Adicionar produto")
+print("2 -> Listar produtos")
+print("3 -> Editar produto")
+print("4 -> Remover produto")
+print("5 -> Listar produtos com stock baixo")
+print("6 -> Listar os 3 produtos mais vendidos")
+
+try:
+    funcao = int(input("Escolha a função (número): "))
     match funcao:
-            case 1:
-                adicionar_produto()
-                
-            case 2:
-                listar_produtos()
-
-            case 3:
-                atualizar_produto()
-
-            case 4:
-                remover_produto()
-                
-            case 5:
-                listar_produtos_com_stock_baixo()
-                
-            case 6:
-                lista_produtos_mais_vendidos()
+        case 1:
+            adicionar_produto()
+        case 2:
+            listar_produtos()
+        case 3:
+            atualizar_produto()
+        case 4:
+            remover_produto()
+        case 5:
+            listar_produtos_com_stock_baixo()
+        case 6:
+            lista_produtos_mais_vendidos()
+        case _:
+            print("Opção inválida.")
+except ValueError:
+    print("Entrada inválida.")

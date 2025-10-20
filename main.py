@@ -1,11 +1,16 @@
 import sys
 import subprocess
 import json
+import json
+import os
 import time
 from pathlib import Path
 from itertools import cycle
+from auth import login_utilizador
+from db import supabase
 
-cliente_logado = False
+
+utilizador_logado = None
 
 try:
     from colorama import Fore, Style, init
@@ -21,7 +26,7 @@ last_choice = None
 
 # Módulos disponíveis
 MODULE_MAP = {
-    "1": ("👤 Cliente (Login / Registo)", "clientes.py"),
+    "1": ("👤 Login", None),
     "2": ("📦 Produtos", "produtos.py"),
     "3": ("🛒 Compras", "compras.py"),
     "4": ("💬 Comentários", "comentarios.py"),
@@ -85,6 +90,23 @@ def save_config(config):
     except Exception as e:
         print(color(f"Erro ao guardar configurações: {e}", Fore.RED))
 
+SESSAO_PATH = BASE_DIR / "sessao.json"
+
+def guardar_sessao(user_dict):
+    with open(SESSAO_PATH, "w", encoding="utf-8") as f:
+        json.dump(user_dict, f)
+
+def carregar_sessao():
+    try:
+        with open(SESSAO_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return None
+
+def limpar_sessao():
+    if SESSAO_PATH.exists():
+        os.remove(SESSAO_PATH)
+
 # Aplica cor se possível
 def color(text, color_code):
     if not COLOR_ENABLED:
@@ -93,7 +115,6 @@ def color(text, color_code):
 
 # Executa script
 def run_script(filename: str):
-    global cliente_logado
     path = BASE_DIR / filename
     if not path.exists():
         print(color(f"{TEXTS['not_found']}: {filename}", Fore.RED))
@@ -103,15 +124,30 @@ def run_script(filename: str):
     try:
         subprocess.run([sys.executable, str(path)], check=False)
         print(color(f"\n{TEXTS['done']}", Fore.GREEN))
-
-        # se o script executado for o de login, marca como logado
-        if filename == "clientes.py":
-            cliente_logado = True
-
     except KeyboardInterrupt:
         print(color(f"\n{TEXTS['interrupted']}", Fore.YELLOW))
     except Exception as e:
         print(color(f"\n{TEXTS['error']} {e}", Fore.RED))
+
+
+def login_menu():
+    global utilizador_logado
+    print("\n🔐 Login")
+    email = input("Email: ")
+    password = input("Password: ")
+    user = login_utilizador(email, password)
+    if user:
+        perfil = supabase.table("perfil").select("nome", "tipo").eq("user_id", user.id).execute()
+        if perfil.data:
+            nome = perfil.data[0]["nome"]
+            tipo = perfil.data[0]["tipo"]
+            print(color(f"\n✅ Bem-vindo, {nome} ({tipo})", Fore.GREEN))
+            utilizador_logado = {"id": user.id, "nome": nome, "tipo": tipo}
+        else:
+            print(color("⚠️ Perfil não encontrado.", Fore.YELLOW))
+    else:
+        print(color("⛔ Login falhou. Verifica credenciais ou email não verificado.", Fore.RED))
+
 
 # Cabeçalho animado
 def show_menu_header(theme, frame):
@@ -123,11 +159,11 @@ def show_menu_header(theme, frame):
     time.sleep(0.2)
 
 # Opções do menu com animação
-def show_menu_options(theme):
+def show_menu_options(theme, utilizador_logado):
     colors = THEME_COLORS[theme]
     for key, (label, _) in MODULE_MAP.items():
-        # esconde a opção de login se o cliente já estiver logado
-        if cliente_logado and key == "1":
+        # esconde a opção de login se já estiver logado
+        if utilizador_logado and key == "1":
             continue
         emoji_color = colors["exit"] if key == "0" else colors["option"]
         star = " ⭐" if key == last_choice else ""
@@ -136,9 +172,11 @@ def show_menu_options(theme):
     print(color("─" * 50, colors["header"]))
     time.sleep(0.1)
 
+
 # Menu principal
 def main_menu():
     global last_choice
+    utilizador_logado = None  # novo estado de login
     config = load_config()
     theme = config["theme"]
     frame_cycle = cycle(["◐", "◓", "◑", "◒"])
@@ -147,7 +185,7 @@ def main_menu():
     while True:
         frame = next(frame_cycle)
         show_menu_header(theme, frame)
-        show_menu_options(theme)
+        show_menu_options(theme, utilizador_logado)
 
         escolha = input(color(TEXTS["choose"], THEME_COLORS[theme]["prompt"])).strip()
 
@@ -160,8 +198,31 @@ def main_menu():
         last_choice = escolha
 
         if escolha == "0":
+            limpar_sessao()
             print(color(f"\n{TEXTS['exit']}", THEME_COLORS[theme]["title"]))
             break
+
+        if escolha == "1":
+            # login direto aqui
+            from auth import login_utilizador
+            from db import supabase
+            print("\n🔐 Login")
+            email = input("Email: ")
+            password = input("Password: ")
+            user = login_utilizador(email, password)
+            if user:
+                perfil = supabase.table("perfil").select("nome", "tipo").eq("user_id", user.id).execute()
+                if perfil.data:
+                    nome = perfil.data[0]["nome"]
+                    tipo = perfil.data[0]["tipo"]
+                    print(color(f"\n✅ Bem-vindo, {nome} ({tipo})", Fore.GREEN))
+                    utilizador_logado = {"id": user.id, "nome": nome, "tipo": tipo}
+                    guardar_sessao(utilizador_logado)
+                else:
+                    print(color("⚠️ Perfil não encontrado.", Fore.YELLOW))
+            else:
+                print(color("⛔ Login falhou. Verifica credenciais ou email não verificado.", Fore.RED))
+            continue
 
         if escolha == "5":
             print(color(f"\n{TEXTS['config_title']}", THEME_COLORS[theme]["info"]))
@@ -170,7 +231,7 @@ def main_menu():
             if new_theme in THEME_COLORS:
                 config["theme"] = new_theme
                 save_config(config)
-                theme = new_theme  # Aplica dinamicamente
+                theme = new_theme
                 print(color(TEXTS["config_saved"], Fore.GREEN))
             else:
                 print(color(TEXTS["config_invalid"], Fore.RED))
@@ -178,9 +239,10 @@ def main_menu():
             continue
 
         run_script(filename)
-        
+
         if escolha != "4":
             input(color(f"\n{TEXTS['back']}", THEME_COLORS[theme]["prompt"]))
+
 
 if __name__ == "__main__":
     main_menu()
