@@ -51,10 +51,9 @@ def fazer_login_admin():
 
 
 def fazer_comentario(user_id):
-    autor = input("Digite seu nome: ")
-    texto = input("\nEscreva seu comentário: ")
-    produto = input("\nProduto: ")
-
+    response_cliente = supabase.table("clientes").select("id").eq("id", user_id).execute()
+    autor = response_cliente.data[0]
+    produto = input("\nQual o produto que quer fazer o comentário: ")
     response = supabase.table("produtos").select("id", "nome").ilike("nome", f"%{produto}%").execute()
     produtos = response.data
 
@@ -77,9 +76,10 @@ def fazer_comentario(user_id):
             return
     else:
         produto_id = produtos[0]["id"]
+    texto = input("\nEscreva o seu comentário: ")
 
     supabase.table("comentarios").insert({
-        "autor": autor,
+        "cliente_id": autor["id"],
         "texto": texto,
         "produto_id": produto_id,
         "aprovado": False
@@ -99,7 +99,39 @@ def julgar_comentario():
     print(response)
 
 def listar_comentario_por_produto():
-    print("Por fazer")
+    produto = input("Indique o produto que quer ver o comentário: ")
+    response = supabase.table("produtos").select("nome, id").ilike("nome", f"%{produto}%").execute()
+    produtos = response.data
+
+    if not produtos:
+        print("Produto não encontrado.")
+        return
+
+    print("\nProdutos encontrados:")
+    for i, p in enumerate(produtos):
+        print(f"{i + 1}. {p['nome']} ID -> {p['id']}")
+
+    escolha = input("\nDigite o número do produto desejado: ")
+    try:
+        index = int(escolha) - 1
+        produto_id = produtos[index]["id"]
+    except (ValueError, IndexError):
+        print("Escolha inválida.")
+        return
+
+    # Corrigido: usar eq em vez de ilike
+    response_comentarios = supabase.table("comentarios").select("*").eq("produto_id", produto_id).execute()
+    comentarios = response_comentarios.data
+
+    if not comentarios:
+        print("Nenhum comentário encontrado para este produto.")
+        return
+
+    print("\nComentários encontrados:")
+    for i, c in enumerate(comentarios):
+        print(f"{i + 1}. ID do comentário: {c['id']} | Produto ID: {c['produto_id']} | Autor: {c['autor']} | Texto: {c['texto']} | Aprovado: {c['aprovado']}")
+
+
 
 def remover_comentario():
     autor = input("Digite o autor do comentário: ")
@@ -125,6 +157,7 @@ elif tipo == 2:
         print("1 -> Listagem de comentários por produtos.")
         print("2 -> Aprovar/Rejeitar comentário.")
         print("3 -> Remover Comentário.")
+        print("4 -> Listar comentários por produto.")
         escolha = int(input("Opção: "))
         if escolha == 1:
             listar_comentario_por_produto()
@@ -132,6 +165,8 @@ elif tipo == 2:
             julgar_comentario()
         elif escolha == 3:
             remover_comentario()
+        elif escolha == 4:
+            listar_comentario_por_produto()
         else:
             print("Opção inválida!!")
 else: 
