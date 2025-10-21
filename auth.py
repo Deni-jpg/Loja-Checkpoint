@@ -25,6 +25,27 @@ def registar_utilizador(email: str, password: str, nome: str, tipo: str):
     else:
         print("Erro ao registar:", res)
         return None
+    
+def recuperar_password(email: str):
+    try:
+        supabase.auth.reset_password_email(email)
+        print("Email de recuperação enviado com sucesso.")
+    except Exception as e:
+        print("Erro ao enviar email de recuperação:", str(e))
+        
+
+def atualizar_perfil(user_id: str, nome: str = None, tipo: str = None):
+    dados = {}
+    if nome:
+        dados["nome"] = nome
+    if tipo:
+        dados["tipo"] = tipo
+    try:
+        supabase.table("perfil").update(dados).eq("user_id", user_id).execute()
+        print("Perfil atualizado com sucesso.")
+    except Exception as e:
+        print("Erro ao atualizar perfil:", str(e))
+
 
 # Login
 def login_utilizador(email: str, password: str):
