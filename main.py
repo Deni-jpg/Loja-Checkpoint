@@ -149,15 +149,10 @@ def login_menu():
     else:
         print(color("⛔ Login falhou. Verifica credenciais ou email não verificado.", Fore.RED))
 
-def registo_menu():
-    global utilizador_logado
-    print("\n🔐 Registo")
-    nome = input("Nome: ")
-    email = input("Email: ")
-    password = input("Password: ")
-    user = registar_utilizador(nome, email, password, "cliente")
+def registo_menu(email, password, nome, tipo):   
+    registar_utilizador(email, password, nome, tipo)
     
-    print(color(f"\n✅ Registo bem sucessedido!", Fore.GREEN))
+    print(color(f"\n✅ Registo bem sucessedido!\n", Fore.GREEN))
 
 # Cabeçalho animado
 def show_menu_header(theme, frame):
@@ -233,6 +228,14 @@ def main_menu():
             else:
                 print(color("⛔ Login falhou. Verifica credenciais ou email não verificado.", Fore.RED))
             continue
+
+        if escolha == "2":
+            print("\n🔐 Registo")
+            nome = input("Nome: ")
+            email = input("Email: ").strip()
+            password = input("Password: ")
+            tipo = "cliente"
+            registo_menu(email, password, nome, tipo)
 
         if escolha == "5":
             print(color(f"\n{TEXTS['config_title']}", THEME_COLORS[theme]["info"]))
