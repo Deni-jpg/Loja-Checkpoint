@@ -152,7 +152,7 @@ def login_menu():
 def registo_menu(email, password, nome, tipo):   
     registar_utilizador(email, password, nome, tipo)
     
-    print(color(f"\n✅ Registo bem sucessedido!\n", Fore.GREEN))
+    print(color(f"\n✅ Registo bem sucessedido!", Fore.GREEN))
 
 # Cabeçalho animado
 def show_menu_header(theme, frame):
@@ -236,6 +236,7 @@ def main_menu():
             password = input("Password: ")
             tipo = "cliente"
             registo_menu(email, password, nome, tipo)
+            continue
 
         if escolha == "5":
             print(color(f"\n{TEXTS['config_title']}", THEME_COLORS[theme]["info"]))
