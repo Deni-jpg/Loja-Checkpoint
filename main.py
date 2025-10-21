@@ -6,7 +6,7 @@ import os
 import time
 from pathlib import Path
 from itertools import cycle
-from auth import login_utilizador
+from auth import login_utilizador, registar_utilizador
 from db import supabase
 
 
@@ -27,10 +27,11 @@ last_choice = None
 # Módulos disponíveis
 MODULE_MAP = {
     "1": ("👤 Login", None),
-    "2": ("📦 Produtos", "produtos.py"),
-    "3": ("🛒 Compras", "compras.py"),
-    "4": ("💬 Comentários", "comentarios.py"),
-    "5": ("⚙️ Configurações", None),
+    "2": ("🆕 Registo", None),
+    "3": ("📦 Produtos", "produtos.py"),
+    "4": ("🛒 Compras", "compras.py"),
+    "5": ("💬 Comentários", "comentarios.py"),
+    "6": ("⚙️ Configurações", None),
     "0": ("🚪 Sair", None)
 }
 
@@ -148,6 +149,15 @@ def login_menu():
     else:
         print(color("⛔ Login falhou. Verifica credenciais ou email não verificado.", Fore.RED))
 
+def registo_menu():
+    global utilizador_logado
+    print("\n🔐 Registo")
+    nome = input("Nome: ")
+    email = input("Email: ")
+    password = input("Password: ")
+    user = registar_utilizador(nome, email, password, "cliente")
+    
+    print(color(f"\n✅ Registo bem sucessedido!", Fore.GREEN))
 
 # Cabeçalho animado
 def show_menu_header(theme, frame):
