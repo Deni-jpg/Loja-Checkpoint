@@ -65,6 +65,23 @@ def login_utilizador(email: str, password: str):
             print("Erro ao fazer login:", mensagem)
         return None
 
+def login_admin(email: str, password: str):
+    try:
+        res = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        if res.session:
+            print("Login bem-sucedido.")
+            return res.session.user
+        else:
+            print("Credenciais inválidas.")
+            return None
+    except Exception as e:
+        mensagem = str(e)
+        if "Email not confirmed" in mensagem or "Email not verified" in mensagem:
+            print("A tua conta ainda não está verificada. Verifica o email antes de fazer login.")
+        else:
+            print("Erro ao fazer login:", mensagem)
+        return None
+
 
 # Logout
 def logout_utilizador():
