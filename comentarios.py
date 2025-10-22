@@ -98,7 +98,14 @@ def listar_comentario_por_produto():
         print("Escolha inválida.")
         return
 
-    comentarios = supabase.table("comentarios").select("*").eq("produto_id", produto_id).execute().data
+    comentarios = (
+    supabase.table("comentarios")
+    .select("*")
+    .eq("produto_id", produto_id)
+    .eq("aprovado", True)
+    .execute()
+    .data
+    )
     if not comentarios:
         print("Nenhum comentário encontrado.")
         return
