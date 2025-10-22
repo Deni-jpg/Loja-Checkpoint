@@ -101,88 +101,6 @@ def confirmar_compra(user_id, produto):
         print("Opção inválida.")
 
 def fazer_compra(user_id):
-<<<<<<< HEAD
-
-    escolha2 = int(input("\nPrefere pesquisar o nome/plataforma do jogo ou ver todos os produtos disponíveis e selecionar através desse menu? (1 -> pesquisar; 2 -> ver lista produtos) \n"))
-    if escolha2 == 1:
-        print(" -- Menu Procurar -- ")
-        escolha3 = int(input("\nProcurar por nome ou plataforma? (1 --> nome, 2 --> plataforma)"))
-        if escolha3 == 1:
-            nome_jogo = input("Insira o nome do jogo: ")
-            response = supabase.table("produtos").select("*").ilike("nome", f"%{nome_jogo}%").execute()
-            print("\nJogos: ", "\n")
-            if response.data:
-                produtos = response.data
-                for i, produto in enumerate(produtos, start=1):
-                    print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']}")
-            else:
-                print("Jogo não encontrado!!")
-        elif escolha3 == 2:
-            plataforma_jogo = input("Insira a plataforma: ")
-            response = supabase.table("produtos").select("*").ilike("plataforma",f"%{plataforma_jogo}%").execute()
-            print("\nJogos da plataforma: ", plataforma_jogo, "\n")
-            if response.data:
-                produtos = response.data
-                for i, produto in enumerate(produtos, start=1):
-                    print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']}")
-            else:
-                print("Nenhum jogo encontrado nessa plataforma!!")
-    elif escolha2 == 2:    
-        print("Produtos disponíveis:\n")
-        response = supabase.table("produtos").select('id', 'nome', 'preco', 'stock', 'plataforma', 'vendas').execute()
-
-        if response.data:
-            produtos = response.data
-            for i, produto in enumerate(produtos, start=1):
-                print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']}")
-
-            # Escolha do utilizador
-            escolha = input("\nDigite o número do produto que deseja comprar: ")
-            try:
-                escolha = int(escolha)
-                if 1 <= escolha <= len(produtos):
-                    produto_escolhido = produtos[escolha - 1]
-                    print(f"\nNome: {produto_escolhido['nome']} ({produto_escolhido['plataforma']})")
-                    print(f"Preço: €{produto_escolhido['preco']:.2f}")
-                    print(f"Stock disponível: {produto_escolhido['stock']}")
-                    #Confirmar
-                    confirmar = input("\nTem certeza(S/N): ")
-                    confirmar_maiusculo = confirmar.upper()
-                    if confirmar_maiusculo == "S":
-                        print("Opção escolhida: ", confirmar_maiusculo)
-                        if produto_escolhido["stock"] > 0:
-                            novo_stock = produto_escolhido["stock"] - 1
-                            vendas_novas = produto_escolhido["vendas"] + 1
-                            supabase.table("produtos").update({
-                                "stock": novo_stock,
-                                "vendas": vendas_novas
-                            }).eq("id", produto_escolhido["id"]).execute()
-
-                            supabase.table("compras").insert({
-                                "cliente_id": user_id,
-                                "produto_id": produto_escolhido["id"],
-                                "data": datetime.now().isoformat()
-                            }).execute()
-
-                            print("\nCompra feita com sucesso!!")
-
-                        else:
-                            print("Produto sem stock disponível.")
-
-                    elif confirmar_maiusculo == "N":
-                        print("Opção escolhida", confirmar_maiusculo)
-                        print("\nCompra cancelada")
-                    else:
-                        print("Opção inválida!!")
-                else:
-                    print("Número inválido.")
-            except ValueError:
-                print("Entrada inválida. Digite um número.")
-        else:
-            print("Nenhum produto encontrado!")
-    else: 
-        print("\nOpção Inválida")
-=======
     print("\n Menu de Compras")
     print("1 -> Procurar produto")
     print("2 -> Ver todos os produtos")
@@ -208,13 +126,70 @@ def fazer_compra(user_id):
     except ValueError:
         print("Entrada inválida.")
 
->>>>>>> d99c774b3aa72dae51d7a215259a2e616e2eb58b
 
 def listar_compras():
-    print("Por fazer")
+    print("\n📋 Lista de todas as compras:")
+    response = supabase.table("compras").select("*").execute()
+    compras = response.data
+
+    if not compras:
+        print("Nenhuma compra registrada.")
+        return
+
+    for compra in compras:
+        # Buscar nome do cliente
+        cliente_resp = supabase.table("users").select("nome").eq("id", compra["cliente_id"]).execute()
+        cliente_nome = cliente_resp.data[0]["nome"] if cliente_resp.data else "Desconhecido"
+
+        # Buscar nome do produto
+        produto_resp = supabase.table("produtos").select("nome").eq("id", compra["produto_id"]).execute()
+        produto_nome = produto_resp.data[0]["nome"] if produto_resp.data else "Desconhecido"
+
+        # Data
+        data_formatada = datetime.fromisoformat(compra["data"]).strftime("%d/%m/%Y %H:%M")
+
+        print(f"🧾 Cliente: {cliente_nome} | Produto: {produto_nome} | Data: {data_formatada}")
+
 
 def listar_compras_por_cliente():
-    print("Por fazer")
+    nome_cliente = input("\nDigite o nome do cliente: ").strip()
+    # Buscar cliente pelo nome
+    clientes_resp = supabase.table("users").select("id", "nome").ilike("nome", f"%{nome_cliente}%").execute()
+    clientes = clientes_resp.data
+
+    if not clientes:
+        print("Cliente não encontrado.")
+        return
+
+    # Se houver mais de um resultado
+    if len(clientes) > 1:
+        print("\nClientes encontrados:")
+        for i, c in enumerate(clientes, start=1):
+            print(f"{i}. {c['nome']}")
+        try:
+            index = int(input("Selecione o número do cliente: ")) - 1
+            cliente_id = clientes[index]["id"]
+        except:
+            print("Escolha inválida.")
+            return
+    else:
+        cliente_id = clientes[0]["id"]
+
+    # Buscar compras do cliente selecionado
+    compras_resp = supabase.table("compras").select("*").eq("cliente_id", cliente_id).execute()
+    compras = compras_resp.data
+
+    if not compras:
+        print("Este cliente ainda não fez nenhuma compra.")
+        return
+
+    print(f"\n📋 Compras do cliente {clientes[0]['nome']}:")
+    for compra in compras:
+        produto_resp = supabase.table("produtos").select("nome").eq("id", compra["produto_id"]).execute()
+        nome_produto = produto_resp.data[0]["nome"] if produto_resp.data else "Desconhecido"
+        data_formatada = datetime.fromisoformat(compra["data"]).strftime("%d/%m/%Y %H:%M")
+        print(f"🛒 Produto: {nome_produto} | Data: {data_formatada}")
+
 
 user = carregar_sessao()
 if not user:
