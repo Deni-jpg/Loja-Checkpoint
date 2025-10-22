@@ -1,4 +1,13 @@
 from db import supabase
+import json
+import sys
+
+def carregar_sessao():
+    try:
+        with open("sessao.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return None
 
 def adicionar_produto():
     nome = input("Nome: ")
@@ -64,9 +73,18 @@ def listar_produtos():
         for i, produto in enumerate(produtos, start=1):
             print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']}")
 
-print("Funções: ")
-print("1 -> Adicionar produtos")
+    
+user = carregar_sessao()
+if not user or user["tipo"] != "admin":
+    print("⛔ Acesso restrito. Apenas administradores podem gerir produtos.")
+    sys.exit()
+
+print(f"\n✅ Bem-vindo {user['nome']} ao menu de administração de produtos.")
+
+print("\nFunções disponíveis:")
+print("1 -> Adicionar produto")
 print("2 -> Listar produtos")
+<<<<<<< HEAD
 print("3 -> Editar produtos")
 print("4 -> Deletar produtos")
 print("5 -> Listar produtos que precisam ser repostos")
@@ -76,10 +94,22 @@ match funcao:
         case 1:
           adicionar_produto()
         
-        case 2:
-          listar_produtos()
+=======
+print("3 -> Editar produto")
+print("4 -> Remover produto")
+print("5 -> Listar produtos com stock baixo")
+print("6 -> Listar os 3 produtos mais vendidos")
 
+try:
+    funcao = int(input("Escolha a função (número): "))
+    match funcao:
+        case 1:
+            adicionar_produto()
+>>>>>>> d99c774b3aa72dae51d7a215259a2e616e2eb58b
+        case 2:
+            listar_produtos()
         case 3:
+<<<<<<< HEAD
           atualizar_produto()
 
         case 4:
@@ -90,3 +120,16 @@ match funcao:
         
         case 6:
           lista_produtos_mais_vendidos()
+=======
+            atualizar_produto()
+        case 4:
+            remover_produto()
+        case 5:
+            listar_produtos_com_stock_baixo()
+        case 6:
+            lista_produtos_mais_vendidos()
+        case _:
+            print("Opção inválida.")
+except ValueError:
+    print("Entrada inválida.")
+>>>>>>> d99c774b3aa72dae51d7a215259a2e616e2eb58b

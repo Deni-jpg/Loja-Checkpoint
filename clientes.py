@@ -1,7 +1,7 @@
-import bcrypt
-import getpass
+from auth import registar_utilizador, login_utilizador, logout_utilizador
 from db import supabase
 
+<<<<<<< HEAD
 def registar_cliente():
     nome = input("Nome: ")
     email = input("Email: ")
@@ -44,15 +44,16 @@ def login_cliente():
         return None
 
 def editar_cliente(cliente_id):
+=======
+def editar_perfil(user_id):
+>>>>>>> d99c774b3aa72dae51d7a215259a2e616e2eb58b
     nome = input("Novo nome: ")
-    password = getpass.getpass("Nova password: ")
-    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    supabase.table("clientes").update({
-        "nome": nome,
-        "password": hashed
-    }).eq("id", cliente_id).execute()
-    print("Cliente editado com sucesso.")
+    supabase.table("perfil").update({
+        "nome": nome
+    }).eq("user_id", user_id).execute()
+    print("Perfil editado com sucesso.")
 
+<<<<<<< HEAD
 def remover_cliente(cliente_id):
     cliente_id = input("Digite o id do cliente: ")
     response = (
@@ -70,38 +71,24 @@ def listar_clientes():
         clientes = response.data
         for i, cliente in enumerate(clientes, start=1):
             print(f"{i}. Nome: {cliente['nome']} - Email: {cliente['email']} - criado em: {cliente['criado_em']}")
+=======
+def remover_perfil(user_id):
+    supabase.table("perfil").delete().eq("user_id", user_id).execute()
+    print("Perfil removido com sucesso.")
+
+def listar_utilizadores():
+    response = supabase.table("perfil").select('user_id', 'nome', 'tipo').execute()
+    if response.data:
+        for i, perfil in enumerate(response.data, start=1):
+            print(f"{i}. Nome: {perfil['nome']} - Tipo: {perfil['tipo']}")
+>>>>>>> d99c774b3aa72dae51d7a215259a2e616e2eb58b
 
 def criar_admin():
     nome = input("Nome do admin: ")
-    email = input("Email do admin: ")
-    password = getpass.getpass("Password: ")
-    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    email = input("Email: ")
+    password = input("Password: ")
+    registar_utilizador(email, password, nome, "admin")
 
-    supabase.table("admins").insert({
-        "email": email,
-        "nome": nome,
-        "password": hashed
-    }).execute()
-    print("Administrador criado com sucesso.")
-
-def login_admin():
-    email = input("Email do admin: ")
-    password = getpass.getpass("Password: ")
-
-    res = supabase.table("admins").select("id", "password").eq("email", email).execute()
-    if not res.data:
-        print("Admin não encontrado.")
-        return None
-
-    admin = res.data[0]
-    hashed = admin["password"]
-
-    if bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8')):
-        print("Login bem-sucedido.")
-        return admin["id"]
-    else:
-        print("Password incorreta.")
-        return None
 
 # Menu principal
 print("Escolha o tipo de utilizador:")
@@ -115,27 +102,45 @@ if tipo == 1:
     print("2 -> Fazer Login")
     funcao = int(input("Escolha a função: "))
     if funcao == 1:
-        registar_cliente()
+        nome = input("Nome: ")
+        email = input("Email: ")
+        password = input("Password: ")
+        registar_utilizador(email, password, nome, "cliente")
     elif funcao == 2:
+<<<<<<< HEAD
         login_cliente()
+=======
+        email = input("Email: ")
+        password = input("Password: ")
+        user = login_utilizador(email, password)
+        if user:
+            print(f"Bem-vindo, {email}")
+        else:
+            print("Credenciais inválidas.")
+>>>>>>> d99c774b3aa72dae51d7a215259a2e616e2eb58b
 
 elif tipo == 2:
-    admin_id = login_admin()
-    if admin_id:
-        print("\n✅ Acesso autorizado ao menu de administração.")
-        print("1 -> Listar clientes")
-        print("2 -> Editar cliente")
-        print("3 -> Remover cliente")
-        funcao = int(input("Escolha a função: "))
-        if funcao == 1:
-            listar_clientes()
-        elif funcao == 2:
-            cliente_id = int(input("ID do cliente a editar: "))
-            editar_cliente(cliente_id)
-        elif funcao == 3:
-            cliente_id = int(input("ID do cliente a remover: "))
-            remover_cliente(cliente_id)
-    else:
-        print("⛔ Acesso negado. Credenciais inválidas.")
+    print("\nLogin Administrador")
+    email = input("Email: ")
+    password = input("Password: ")
+    user = login_utilizador(email, password)
 
+    if user:
+        perfil = supabase.table("perfil").select("tipo").eq("user_id", user.id).execute()
+        if perfil.data and perfil.data[0]["tipo"] == "admin":
+            print("\n Acesso autorizado ao menu de administração.")
+            print("1 -> Listar utilizadores")
+            print("2 -> Editar perfil")
+            print("3 -> Remover perfil")
+            funcao = int(input("Escolha a função: "))
+            if funcao == 1:
+                listar_utilizadores()
+            elif funcao == 2:
+                editar_perfil(user.id)
+            elif funcao == 3:
+                remover_perfil(user.id)
+        else:
+            print("Acesso negado. Não és administrador.")
+    else:
+        print("Credenciais inválidas.")
 
