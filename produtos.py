@@ -84,17 +84,6 @@ print(f"\n✅ Bem-vindo {user['nome']} ao menu de administração de produtos.")
 print("\nFunções disponíveis:")
 print("1 -> Adicionar produto")
 print("2 -> Listar produtos")
-<<<<<<< HEAD
-print("3 -> Editar produtos")
-print("4 -> Deletar produtos")
-print("5 -> Listar produtos que precisam ser repostos")
-print("6 -> Listar os 3 produtos mais vendidos")
-funcao = int(input("Que função quer fazer na tabela produtos(insira o número): "))
-match funcao:
-        case 1:
-          adicionar_produto()
-        
-=======
 print("3 -> Editar produto")
 print("4 -> Remover produto")
 print("5 -> Listar produtos com stock baixo")
@@ -105,22 +94,9 @@ try:
     match funcao:
         case 1:
             adicionar_produto()
->>>>>>> d99c774b3aa72dae51d7a215259a2e616e2eb58b
         case 2:
             listar_produtos()
         case 3:
-<<<<<<< HEAD
-          atualizar_produto()
-
-        case 4:
-          remover_produto()
-        
-        case 5:
-          listar_produtos_com_stock_baixo()
-        
-        case 6:
-          lista_produtos_mais_vendidos()
-=======
             atualizar_produto()
         case 4:
             remover_produto()
@@ -132,4 +108,3 @@ try:
             print("Opção inválida.")
 except ValueError:
     print("Entrada inválida.")
->>>>>>> d99c774b3aa72dae51d7a215259a2e616e2eb58b
