@@ -6,7 +6,7 @@ import os
 import time
 from pathlib import Path
 from itertools import cycle
-from auth import login_utilizador, registar_utilizador
+from auth import login_utilizador, registar_utilizador, login_admin
 from db import supabase
 
 
@@ -167,8 +167,11 @@ def show_menu_header(theme, frame):
 def show_menu_options(theme, utilizador_logado):
     colors = THEME_COLORS[theme]
     for key, (label, _) in MODULE_MAP.items():
-        # esconde a opção de login se já estiver logado
+        # Esconde "Login" (1) se já está autenticado
         if utilizador_logado and key == "1":
+            continue
+        # Esconde "Registo" (2) só para clientes, mas mostra para admins
+        if utilizador_logado and key == "2" and utilizador_logado.get("tipo") != "admin":
             continue
         emoji_color = colors["exit"] if key == "0" else colors["option"]
         star = " ⭐" if key == last_choice else ""
@@ -178,10 +181,11 @@ def show_menu_options(theme, utilizador_logado):
     time.sleep(0.1)
 
 
+
 # Menu principal
 def main_menu():
-    global last_choice
-    utilizador_logado = None
+    global last_choice, utilizador_logado
+    utilizador_logado = carregar_sessao()
     config = load_config()
     theme = config["theme"]
     frame_cycle = cycle(["◐", "◓", "◑", "◒"])
@@ -228,12 +232,25 @@ def main_menu():
 
         elif escolha == "2":
             print("\n🔐 Registo")
-            nome = input("Nome: ")
+
+            nome = input("Nome: ").strip()
             email = input("Email: ").strip()
-            password = input("Password: ")
-            tipo = "cliente"
+            password = input("Password: ").strip()
+
+            # Verifica se o utilizador atual é admin
+            if utilizador_logado and utilizador_logado.get("tipo") == "admin":
+                print(color("👑 Estás autenticado como admin. O novo utilizador será admin também.", Fore.YELLOW))
+                tipo = "admin"
+            elif utilizador_logado:
+                print(color("⛔ Já estás autenticado. Não podes fazer novo registo agora.", Fore.RED))
+                tipo = "cliente"
+            else:
+                tipo = "cliente"
+
             registo_menu(email, password, nome, tipo)
             continue
+
+
 
         elif escolha == "6":
             print(color(f"\n{TEXTS['config_title']}", THEME_COLORS[theme]["info"]))
