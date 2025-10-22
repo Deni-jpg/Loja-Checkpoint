@@ -1,96 +1,4 @@
 from db import supabase
-<<<<<<< HEAD
-import getpass
-import bcrypt
-
-def fazer_login_cliente():
-    email = input("Email utilizador: ")
-    password = getpass.getpass("Password: ")
-
-    res = supabase.table("clientes").select("id", "password").eq("email", email).execute()
-    if not res.data:
-        print("Cliente não encontrado.")
-        return None
-
-    user = res.data[0]
-    hashed = user["password"]
-
-    if bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8')):
-        print("Login bem-sucedido, pode continuar para o menu de compras.")
-        return user["id"]
-    else:
-        print("Password incorreta.")
-        return None  
-    
-def fazer_login_admin():
-    email = input("Email do admin: ")
-    password = getpass.getpass("Password: ")
-
-    res = supabase.table("admins").select("id", "password").eq("email", email).execute()
-    if not res.data:
-        print("Admin não encontrado.")
-        return None
-
-    admin = res.data[0]
-    hashed = admin["password"]
-
-    if bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8')):
-        print("Login bem-sucedido.")
-        return admin["id"]
-    else:
-        print("Password incorreta.")
-        return None
-
-
-def fazer_comentario(user_id):
-    autor = input("Digite seu nome: ")
-    texto = input("\nEscreva seu comentário: ")
-
-    supabase.table("comentarios").insert({
-        "autor": autor,
-        "texto": texto
-    }).execute()
-    print("Por fazer")
-
-def julgar_comentario():
-    print("Por fazer")
-
-def listar_comentario_por_produto():
-    print("Por fazer")
-
-def remover_comentario():
-    print("Por fazer")
-
-print("Fazer login para aceder o menu comentários: \n")
-
-print("Escolha o tipo de utilizador:")
-print("1 -> Cliente")
-print("2 -> Administrador")
-tipo = int(input("Opção: "))
-
-if tipo == 1:
-    user_id = fazer_login_cliente()
-    if user_id:
-        fazer_comentario(user_id)
-elif tipo == 2:
-    admin_id = fazer_login_admin()
-    if admin_id:
-        print("Que tipo de ação vai fazer: \n")
-        print("1 -> Listagem de comentários por produtos.")
-        print("2 -> Aprovar/Rejeitar comentário.")
-        print("3 -> Remover Comentário.")
-        escolha = int(input("Opção: "))
-        if escolha == 1:
-            listar_comentario_por_produto()
-        elif escolha == 2:
-            julgar_comentario()
-        elif escolha == 3:
-            remover_comentario()
-        else:
-            print("Opção inválida!!")
-else: 
-    print("Opção inválida!!")
-=======
 from datetime import datetime
 import json
 import sys
@@ -138,13 +46,40 @@ def fazer_comentario(user_id):
 
 
 def julgar_comentario():
-
-    response = (
+    # Buscar apenas comentários não aprovados
+    comentarios = (
         supabase.table("comentarios")
         .select("*")
+        .eq("aprovado", False)
         .execute()
+        .data
     )
-    print(response)
+
+    if not comentarios:
+        print("Não há comentários pendentes de aprovação.")
+        return
+
+    for i, c in enumerate(comentarios):
+        print(f"{i + 1}. ID: {c['id']} | Texto: {c['texto']}")
+
+    try:
+        index = int(input("\nNúmero do comentário a julgar: ")) - 1
+        comentario_id = comentarios[index]["id"]
+    except:
+        print("Escolha inválida.")
+        return
+
+    decisao = input("Aprovar este comentário? (s = aprovar / n = rejeitar): ").lower()
+
+    if decisao == "s":
+        supabase.table("comentarios").update({"aprovado": True}).eq("id", comentario_id).execute()
+        print("✅ Comentário aprovado.")
+    elif decisao == "n":
+        supabase.table("comentarios").delete().eq("id", comentario_id).execute()
+        print("❌ Comentário rejeitado e removido.")
+    else:
+        print("Opção inválida.")
+
 
 def listar_comentario_por_produto():
     produto = input("Produto para ver comentários: ")
@@ -285,4 +220,3 @@ elif user["tipo"] == "admin":
         print("Opção inválida.")
 else:
     print("Tipo de utilizador desconhecido.")
->>>>>>> d99c774b3aa72dae51d7a215259a2e616e2eb58b
