@@ -181,7 +181,7 @@ def show_menu_options(theme, utilizador_logado):
 # Menu principal
 def main_menu():
     global last_choice
-    utilizador_logado = None  # novo estado de login
+    utilizador_logado = None
     config = load_config()
     theme = config["theme"]
     frame_cycle = cycle(["◐", "◓", "◑", "◒"])
@@ -207,10 +207,7 @@ def main_menu():
             print(color(f"\n{TEXTS['exit']}", THEME_COLORS[theme]["title"]))
             break
 
-        if escolha == "1":
-            # login direto aqui
-            from auth import login_utilizador
-            from db import supabase
+        elif escolha == "1":
             print("\n🔐 Login")
             email = input("Email: ")
             password = input("Password: ")
@@ -229,7 +226,7 @@ def main_menu():
                 print(color("⛔ Login falhou. Verifica credenciais ou email não verificado.", Fore.RED))
             continue
 
-        if escolha == "2":
+        elif escolha == "2":
             print("\n🔐 Registo")
             nome = input("Nome: ")
             email = input("Email: ").strip()
@@ -238,10 +235,9 @@ def main_menu():
             registo_menu(email, password, nome, tipo)
             continue
 
-        if escolha == "5":
+        elif escolha == "6":
             print(color(f"\n{TEXTS['config_title']}", THEME_COLORS[theme]["info"]))
             new_theme = input(TEXTS["theme_prompt"]).strip().lower()
-
             if new_theme in THEME_COLORS:
                 config["theme"] = new_theme
                 save_config(config)
@@ -252,10 +248,12 @@ def main_menu():
             input(color(f"\n{TEXTS['back']}", THEME_COLORS[theme]["prompt"]))
             continue
 
-        run_script(filename)
+        # Executa script associado, se existir
+        if filename:
+            run_script(filename)
+            if escolha != "4":
+                input(color(f"\n{TEXTS['back']}", THEME_COLORS[theme]["prompt"]))
 
-        if escolha != "4":
-            input(color(f"\n{TEXTS['back']}", THEME_COLORS[theme]["prompt"]))
 
 
 if __name__ == "__main__":
