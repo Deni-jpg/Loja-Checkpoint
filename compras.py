@@ -3,23 +3,32 @@ import json
 import sys
 from datetime import datetime
 
+# ------------------------------
+# Funções auxiliares
+# ------------------------------
+
 def carregar_sessao():
     try:
         with open("sessao.json", "r", encoding="utf-8") as f:
             return json.load(f)
     except:
         return None
-    
+
+
 def mostrar_produtos(produtos):
     for i, produto in enumerate(produtos, start=1):
-        print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']} | Vendas: {produto['vendas']}")
-        print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']} | Vendas: {produto['vendas']}")
+        print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | "
+              f"Stock: {produto['stock']} | Vendas: {produto['vendas']}")
+
+
+# ------------------------------
+# Funções de produtos
+# ------------------------------
 
 def procurar_produtos():
-    print("\n Procurar produtos")
+    print("\n🔍 Procurar produtos")
     print("1 -> Por nome")
     print("2 -> Por plataforma")
-    print("3 -> Ver os 10 produtos mais vendidos")
     print("3 -> Ver os 10 produtos mais vendidos")
     try:
         escolha = int(input("Escolha uma opção: "))
@@ -31,8 +40,6 @@ def procurar_produtos():
             response = supabase.table("produtos").select("*").ilike("plataforma", f"%{plataforma}%").execute()
         elif escolha == 3:
             response = supabase.table("produtos").select("*").order("vendas", desc=True).limit(10).execute()
-        elif escolha == 3:
-            response = supabase.table("produtos").select("*").order("vendas", desc=True).limit(10).execute()
         else:
             print("Opção inválida.")
             return []
@@ -42,13 +49,15 @@ def procurar_produtos():
             mostrar_produtos(produtos)
             return produtos
         else:
-            print("Nenhum produto encontrado!!")
+            print("Nenhum produto encontrado!")
             return []
     except ValueError:
-        print("Entrada Inválida.")
+        print("Entrada inválida.")
         return []
+
+
 def listar_todos_produtos():
-    print("\nLista de todos os produtos disponíveis:")
+    print("\n📦 Lista de todos os produtos disponíveis:")
     response = supabase.table("produtos").select('id', 'nome', 'preco', 'stock', 'plataforma', 'vendas').execute()
     produtos = response.data
     if produtos:
@@ -58,6 +67,11 @@ def listar_todos_produtos():
         print("Nenhum produto disponível.")
         return []
 
+
+# ------------------------------
+# Funções de compras
+# ------------------------------
+
 def historico_compras(user_id):
     response = supabase.table("compras").select("produto_id", "data").eq("user_id", user_id).execute()
     compras = response.data
@@ -66,42 +80,50 @@ def historico_compras(user_id):
         print("Ainda não fez nenhuma compra.")
         return
 
-    print("\nHistórico de compras:")
+    print("\n🧾 Histórico de compras:")
     for c in compras:
         produto_resp = supabase.table("produtos").select("nome").eq("id", c["produto_id"]).execute()
         nome = produto_resp.data[0]["nome"] if produto_resp.data else "Desconhecido"
         data_formatada = datetime.fromisoformat(c["data"]).strftime("%d/%m/%Y %H:%M")
         print(f"{nome} - Comprado em: {data_formatada}")
 
+
 def confirmar_compra(user_id, produto):
-    print(f"\n Produto selecionado: {produto['nome']} ({produto['plataforma']})")
-    print(f" Preço: {produto['preco']:.2f}€")
-    print(f" Stock disponível: {produto['stock']}")
+    print(f"\nProduto selecionado: {produto['nome']} ({produto['plataforma']})")
+    print(f"Preço: {produto['preco']:.2f}€")
+    print(f"Stock disponível: {produto['stock']}")
     confirmar = input("Confirmar compra? (S/N): ").strip().upper()
 
     if confirmar == "S":
         if produto["stock"] > 0:
+            # Atualiza o produto
             supabase.table("produtos").update({
                 "stock": produto["stock"] - 1,
                 "vendas": produto["vendas"] + 1
             }).eq("id", produto["id"]).execute()
 
-            supabase.table("compras").insert({
-                "cliente_id": user_id,
+            # Inserir compra sem campo 'id'
+            nova_compra = {
+                "user_id": user_id,
                 "produto_id": produto["id"],
                 "data": datetime.now().isoformat()
-            }).execute()
+            }
 
-            print("Compra realizado com sucesso!")
+            # Inserção explícita sem interferências
+            supabase.table("compras").insert(nova_compra).execute()
+
+            print("✅ Compra realizada com sucesso!")
         else:
-            print("Produto sem stock disponível.")
+            print("❌ Produto sem stock disponível.")
     elif confirmar == "N":
         print("Compra cancelada.")
     else:
         print("Opção inválida.")
 
+
+
 def fazer_compra(user_id):
-    print("\n Menu de Compras")
+    print("\n🛍️ Menu de Compras")
     print("1 -> Procurar produto")
     print("2 -> Ver todos os produtos")
     try:
@@ -111,7 +133,7 @@ def fazer_compra(user_id):
         elif escolha == 2:
             produtos = listar_todos_produtos()
         else:
-            print("Opção Inválida.")
+            print("Opção inválida.")
             return
         
         if produtos:
@@ -138,7 +160,7 @@ def listar_compras():
 
     for compra in compras:
         # Buscar nome do cliente
-        cliente_resp = supabase.table("users").select("nome").eq("id", compra["cliente_id"]).execute()
+        cliente_resp = supabase.table("users").select("nome").eq("id", compra["user_id"]).execute()
         cliente_nome = cliente_resp.data[0]["nome"] if cliente_resp.data else "Desconhecido"
 
         # Buscar nome do produto
@@ -153,6 +175,7 @@ def listar_compras():
 
 def listar_compras_por_cliente():
     nome_cliente = input("\nDigite o nome do cliente: ").strip()
+
     # Buscar cliente pelo nome
     clientes_resp = supabase.table("users").select("id", "nome").ilike("nome", f"%{nome_cliente}%").execute()
     clientes = clientes_resp.data
@@ -176,7 +199,7 @@ def listar_compras_por_cliente():
         cliente_id = clientes[0]["id"]
 
     # Buscar compras do cliente selecionado
-    compras_resp = supabase.table("compras").select("*").eq("cliente_id", cliente_id).execute()
+    compras_resp = supabase.table("compras").select("*").eq("user_id", cliente_id).execute()
     compras = compras_resp.data
 
     if not compras:
@@ -190,6 +213,10 @@ def listar_compras_por_cliente():
         data_formatada = datetime.fromisoformat(compra["data"]).strftime("%d/%m/%Y %H:%M")
         print(f"🛒 Produto: {nome_produto} | Data: {data_formatada}")
 
+
+# ------------------------------
+# Execução principal
+# ------------------------------
 
 user = carregar_sessao()
 if not user:
