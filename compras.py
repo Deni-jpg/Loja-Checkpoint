@@ -1,83 +1,158 @@
+from carrinho import (
+    obter_ou_criar_carrinho,
+    adicionar_item,
+    listar_itens,
+    remover_item,
+    calcular_total,
+    finalizar_carrinho
+)
+from produtos_utils import listar_produtos, obter_produto_por_id
 from db import supabase
+from pathlib import Path
 import json
-import sys
 from datetime import datetime
+from notificacao_email import enviar_email
 
-# ------------------------------
-# Funções auxiliares
-# ------------------------------
+SESSAO_PATH = Path(__file__).parent / "sessao.json"
 
 def carregar_sessao():
     try:
-        with open("sessao.json", "r", encoding="utf-8") as f:
+        with open(SESSAO_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except:
         return None
 
+def notificar(mensagem, tipo="info"):
+    cores = {
+        "info": "\033[94m",
+        "sucesso": "\033[92m",
+        "erro": "\033[91m",
+        "alerta": "\033[93m"
+    }
+    cor = cores.get(tipo, "\033[0m")
+    print(f"{cor}🔔 {mensagem}\033[0m")
 
-def mostrar_produtos(produtos):
-    for i, produto in enumerate(produtos, start=1):
-        print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | "
-              f"Stock: {produto['stock']} | Vendas: {produto['vendas']}")
+def recomendar_produto(user_id):
+    response = supabase.table("compras").select("produto_id").eq("user_id", user_id).execute()
+    comprados = [c["produto_id"] for c in response.data]
+
+    if comprados:
+        sugestao = comprados[-1]
+        produto_resp = supabase.table("produtos").select("nome").eq("id", sugestao).execute()
+        if produto_resp.data:
+            nome = produto_resp.data[0]["nome"]
+            notificar(f"💡 Já compraste {nome}. Queres ver produtos semelhantes?", "info")
+
+def menu_compras():
+    sessao = carregar_sessao()
+    if not sessao:
+        notificar("Precisas de fazer login primeiro.", "erro")
+        return
+
+    user_id = sessao["id"]
+    tipo = sessao["tipo"]
+    carrinho_id = obter_ou_criar_carrinho(user_id)
+
+    recomendar_produto(user_id)
+
+    while True:
+        print("\n🛒 Menu de Compras")
+        print("1. Ver produtos")
+        print("2. Adicionar ao carrinho")
+        print("3. Ver carrinho")
+        print("4. Remover item")
+        print("5. Finalizar compra")
+        print("6. Ver histórico de compras")
+        if tipo == "admin":
+            print("7. 📊 Ver todas as compras (admin)")
+            print("8. 🔝 Produtos mais comprados")
+        print("0. Voltar")
+        escolha = input("Escolha: ").strip()
+
+        if escolha == "1":
+            listar_produtos()
+
+        elif escolha == "2":
+            nome_busca = input("Digite parte do nome do jogo: ").strip()
+            plataforma = input("Filtrar por plataforma (ou ENTER para todas): ").strip()
+
+            query = supabase.table("produtos").select("*").ilike("nome", f"%{nome_busca}%")
+            if plataforma:
+                query = query.eq("plataforma", plataforma)
+
+            response = query.order("preco", desc=False).execute()
+
+            if not response.data:
+                notificar("❌ Nenhum produto encontrado com esses critérios.", "erro")
+                continue
+
+            print("\n🔍 Produtos encontrados:")
+            for i, produto in enumerate(response.data, start=1):
+                print(f"{i}. {produto['nome']} ({produto['plataforma']}) - €{produto['preco']:.2f} | Stock: {produto['stock']}")
+
+            try:
+                escolha_produto = int(input("Escolha o número do produto: "))
+                produto = response.data[escolha_produto - 1]
+                quantidade = int(input("Quantidade: "))
+                adicionar_item(carrinho_id, produto["id"], quantidade, produto["preco"])
+                notificar(f"{produto['nome']} adicionado ao carrinho.", "sucesso")
+                if produto["stock"] <= 5:
+                    notificar("⚠️ Stock baixo para este produto!", "alerta")
+            except (ValueError, IndexError):
+                notificar("❌ Escolha inválida.", "erro")
 
 
-# ------------------------------
-# Funções de produtos
-# ------------------------------
+        elif escolha == "3":
+            itens = listar_itens(carrinho_id)
+            if not itens:
+                notificar("Carrinho vazio.", "info")
+            else:
+                print("\nItens no carrinho:")
+                for item in itens:
+                    print(f"{item['nome']} x{item['quantidade']} - €{item['total']:.2f}")
+                print(f"Total: €{calcular_total(carrinho_id):.2f}")
 
-def procurar_produtos():
-    print("\n🔍 Procurar produtos")
-    print("1 -> Por nome")
-    print("2 -> Por plataforma")
-    print("3 -> Ver os 10 produtos mais vendidos")
-    try:
-        escolha = int(input("Escolha uma opção: "))
-        if escolha == 1:
-            nome = input("Digite o nome do jogo: ")
-            response = supabase.table("produtos").select("*").ilike("nome", f"%{nome}%").execute()
-        elif escolha == 2:
-            plataforma = input("Digite a plataforma: ")
-            response = supabase.table("produtos").select("*").ilike("plataforma", f"%{plataforma}%").execute()
-        elif escolha == 3:
-            response = supabase.table("produtos").select("*").order("vendas", desc=True).limit(10).execute()
+        elif escolha == "4":
+            produto_id = int(input("ID do produto a remover: "))
+            remover_item(carrinho_id, produto_id)
+            notificar("Item removido do carrinho.", "alerta")
+
+        elif escolha == "5":
+            finalizar_carrinho(carrinho_id, user_id)
+            perfil = supabase.table("perfil").select("nome").eq("user_id", user_id).execute()
+            if perfil.data and sessao.get("email"):
+                nome = perfil.data[0]["nome"]
+                email = sessao["email"]
+                enviar_email(
+                    destinatario=email,
+                    nome=nome,
+                    assunto="Confirmação de Compra",
+                    corpo="A tua compra foi concluída com sucesso!"
+                )
+            notificar("Compra finalizada com sucesso. Email enviado!", "sucesso")
+            break
+
+        elif escolha == "6":
+            historico_compras(user_id)
+
+        elif escolha == "7" and tipo == "admin":
+            ver_todas_compras()
+
+        elif escolha == "8" and tipo == "admin":
+            produtos_mais_comprados()
+
+        elif escolha == "0":
+            break
+
         else:
-            print("Opção inválida.")
-            return []
-        produtos = response.data
-        if produtos:
-            print("\nProdutos encontrados:")
-            mostrar_produtos(produtos)
-            return produtos
-        else:
-            print("Nenhum produto encontrado!")
-            return []
-    except ValueError:
-        print("Entrada inválida.")
-        return []
-
-
-def listar_todos_produtos():
-    print("\n📦 Lista de todos os produtos disponíveis:")
-    response = supabase.table("produtos").select('id', 'nome', 'preco', 'stock', 'plataforma', 'vendas').execute()
-    produtos = response.data
-    if produtos:
-        mostrar_produtos(produtos)
-        return produtos
-    else:
-        print("Nenhum produto disponível.")
-        return []
-
-
-# ------------------------------
-# Funções de compras
-# ------------------------------
+            notificar("Opção inválida.", "erro")
 
 def historico_compras(user_id):
     response = supabase.table("compras").select("produto_id", "data").eq("user_id", user_id).execute()
     compras = response.data
 
     if not compras:
-        print("Ainda não fez nenhuma compra.")
+        notificar("Ainda não fez nenhuma compra.", "info")
         return
 
     print("\n🧾 Histórico de compras:")
@@ -87,165 +162,41 @@ def historico_compras(user_id):
         data_formatada = datetime.fromisoformat(c["data"]).strftime("%d/%m/%Y %H:%M")
         print(f"{nome} - Comprado em: {data_formatada}")
 
-
-def confirmar_compra(user_id, produto):
-    print(f"\nProduto selecionado: {produto['nome']} ({produto['plataforma']})")
-    print(f"Preço: {produto['preco']:.2f}€")
-    print(f"Stock disponível: {produto['stock']}")
-    confirmar = input("Confirmar compra? (S/N): ").strip().upper()
-
-    if confirmar == "S":
-        if produto["stock"] > 0:
-            # Atualiza o produto
-            supabase.table("produtos").update({
-                "stock": produto["stock"] - 1,
-                "vendas": produto["vendas"] + 1
-            }).eq("id", produto["id"]).execute()
-
-            # Inserir compra sem campo 'id'
-            nova_compra = {
-                "user_id": user_id,
-                "produto_id": produto["id"],
-                "data": datetime.now().isoformat()
-            }
-
-            # Inserção explícita sem interferências
-            supabase.table("compras").insert(nova_compra).execute()
-
-            print("✅ Compra realizada com sucesso!")
-        else:
-            print("❌ Produto sem stock disponível.")
-    elif confirmar == "N":
-        print("Compra cancelada.")
-    else:
-        print("Opção inválida.")
-
-
-
-def fazer_compra(user_id):
-    print("\n🛍️ Menu de Compras")
-    print("1 -> Procurar produto")
-    print("2 -> Ver todos os produtos")
-    try:
-        escolha = int(input("Escolha uma opção: "))
-        if escolha == 1:
-            produtos = procurar_produtos()
-        elif escolha == 2:
-            produtos = listar_todos_produtos()
-        else:
-            print("Opção inválida.")
-            return
-        
-        if produtos:
-            try:
-                num = int(input("\nDigite o número do produto que deseja comprar: "))
-                if 1 <= num <= len(produtos):
-                    confirmar_compra(user_id, produtos[num - 1])
-                else:
-                    print("Número inválido.")
-            except ValueError:
-                print("Entrada inválida.")
-    except ValueError:
-        print("Entrada inválida.")
-
-
-def listar_compras():
-    print("\n📋 Lista de todas as compras:")
-    response = supabase.table("compras").select("*").execute()
+def ver_todas_compras():
+    response = supabase.table("compras").select("user_id", "produto_id", "data").execute()
     compras = response.data
 
     if not compras:
-        print("Nenhuma compra registrada.")
+        notificar("Nenhuma compra registada.", "info")
         return
 
-    for compra in compras:
-        # Buscar nome do cliente
-        cliente_resp = supabase.table("users").select("nome").eq("id", compra["user_id"]).execute()
-        cliente_nome = cliente_resp.data[0]["nome"] if cliente_resp.data else "Desconhecido"
+    print("\n📋 Todas as compras:")
+    for c in compras:
+        produto_resp = supabase.table("produtos").select("nome").eq("id", c["produto_id"]).execute()
+        nome = produto_resp.data[0]["nome"] if produto_resp.data else "Desconhecido"
+        data_formatada = datetime.fromisoformat(c["data"]).strftime("%d/%m/%Y %H:%M")
+        print(f"User: {c['user_id']} - {nome} - {data_formatada}")
 
-        # Buscar nome do produto
-        produto_resp = supabase.table("produtos").select("nome").eq("id", compra["produto_id"]).execute()
-        produto_nome = produto_resp.data[0]["nome"] if produto_resp.data else "Desconhecido"
-
-        # Data
-        data_formatada = datetime.fromisoformat(compra["data"]).strftime("%d/%m/%Y %H:%M")
-
-        print(f"🧾 Cliente: {cliente_nome} | Produto: {produto_nome} | Data: {data_formatada}")
-
-
-def listar_compras_por_cliente():
-    nome_cliente = input("\nDigite o nome do cliente: ").strip()
-
-    # Buscar cliente pelo nome
-    clientes_resp = supabase.table("users").select("id", "nome").ilike("nome", f"%{nome_cliente}%").execute()
-    clientes = clientes_resp.data
-
-    if not clientes:
-        print("Cliente não encontrado.")
-        return
-
-    # Se houver mais de um resultado
-    if len(clientes) > 1:
-        print("\nClientes encontrados:")
-        for i, c in enumerate(clientes, start=1):
-            print(f"{i}. {c['nome']}")
-        try:
-            index = int(input("Selecione o número do cliente: ")) - 1
-            cliente_id = clientes[index]["id"]
-        except:
-            print("Escolha inválida.")
-            return
-    else:
-        cliente_id = clientes[0]["id"]
-
-    # Buscar compras do cliente selecionado
-    compras_resp = supabase.table("compras").select("*").eq("user_id", cliente_id).execute()
-    compras = compras_resp.data
+def produtos_mais_comprados():
+    response = supabase.table("compras").select("produto_id").execute()
+    compras = response.data
 
     if not compras:
-        print("Este cliente ainda não fez nenhuma compra.")
+        notificar("Nenhuma compra registada.", "info")
         return
 
-    print(f"\n📋 Compras do cliente {clientes[0]['nome']}:")
-    for compra in compras:
-        produto_resp = supabase.table("produtos").select("nome").eq("id", compra["produto_id"]).execute()
-        nome_produto = produto_resp.data[0]["nome"] if produto_resp.data else "Desconhecido"
-        data_formatada = datetime.fromisoformat(compra["data"]).strftime("%d/%m/%Y %H:%M")
-        print(f"🛒 Produto: {nome_produto} | Data: {data_formatada}")
+    contagem = {}
+    for c in compras:
+        pid = c["produto_id"]
+        contagem[pid] = contagem.get(pid, 0) + 1
 
+    ordenado = sorted(contagem.items(), key=lambda x: x[1], reverse=True)
 
-# ------------------------------
-# Execução principal
-# ------------------------------
+    print("\n🔝 Produtos mais comprados:")
+    for pid, total in ordenado[:10]:
+        produto_resp = supabase.table("produtos").select("nome").eq("id", pid).execute()
+        nome = produto_resp.data[0]["nome"] if produto_resp.data else "Desconhecido"
+        print(f"{nome} - {total} compras")
 
-user = carregar_sessao()
-if not user:
-    print("⛔ Precisas de fazer login para aceder ao menu de compras.")
-    sys.exit()
-
-print(f"\n🛒 Bem-vindo {user['nome']} ({user['tipo']})")
-
-if user["tipo"] == "cliente":
-    print("\nMenu Cliente")
-    print("1 -> Fazer compras")
-    print("2 -> Ver histórico de compras")
-    escolha = int(input("Opção: "))
-    if escolha == 1:
-        fazer_compra(user["id"])
-    elif escolha == 2:
-        historico_compras(user["id"])
-    else:
-        print("Opção inválida.")
-elif user["tipo"] == "admin":
-    print("\nMenu Administração")
-    print("1 -> Ver todas as compras")
-    print("2 -> Ver compras de um cliente")
-    escolha = int(input("Escolha uma opção: "))
-    if escolha == 1:
-        listar_compras()
-    elif escolha == 2:
-        listar_compras_por_cliente()
-    else:
-        print("Opção inválida.")
-else:
-    print("Tipo de utilizador desconhecido.")
+if __name__ == "__main__":
+    menu_compras()

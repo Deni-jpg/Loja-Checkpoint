@@ -2,6 +2,8 @@ from db import supabase
 import json
 import sys
 
+from produtos_utils import listar_produtos, obter_produto_por_id
+
 def carregar_sessao():
     try:
         with open("sessao.json", "r", encoding="utf-8") as f:
@@ -66,14 +68,7 @@ def remover_produto():
     )
     print("Produto removido com sucesso.")
     
-def listar_produtos():
-    response = supabase.table("produtos").select("*").execute()
-    if response.data:
-        produtos = response.data
-        for i, produto in enumerate(produtos, start=1):
-            print(f"{i}. {produto['nome']} ({produto['plataforma']}) - {produto['preco']:.2f}€ | Stock: {produto['stock']}")
-
-    
+ 
 user = carregar_sessao()
 if not user or user["tipo"] != "admin":
     print("⛔ Acesso restrito. Apenas administradores podem gerir produtos.")
