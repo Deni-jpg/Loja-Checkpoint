@@ -222,7 +222,7 @@ def main_menu():
                     nome = perfil.data[0]["nome"]
                     tipo = perfil.data[0]["tipo"]
                     print(color(f"\n✅ Bem-vindo, {nome} ({tipo})", Fore.GREEN))
-                    utilizador_logado = {"id": user.id, "nome": nome, "tipo": tipo}
+                    utilizador_logado = {"id": user.id, "nome": nome, "tipo": tipo, "email" : user.email}
                     guardar_sessao(utilizador_logado)
                 else:
                     print(color("⚠️ Perfil não encontrado.", Fore.YELLOW))
