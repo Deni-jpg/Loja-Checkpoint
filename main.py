@@ -33,6 +33,7 @@ MODULE_MAP = {
     "5": ("💬 Comentários", "comentarios.py"),
     "6": ("⚙️ Configurações", None),
     "7": ("⭐ Avaliações", "avaliacoes.py"),
+    "8": ("🆚 Comparar Jogos", "comparar_jogos.py"),
     "0": ("🚪 Sair", None)
 }
 
