@@ -120,17 +120,56 @@ def menu_compras():
         elif escolha == "5":
             finalizar_carrinho(carrinho_id, user_id)
             perfil = supabase.table("perfil").select("nome").eq("user_id", user_id).execute()
+            
             if perfil.data and sessao.get("email"):
                 nome = perfil.data[0]["nome"]
                 email = sessao["email"]
+
+                # Obter detalhes da compra
+                itens = listar_itens(carrinho_id)
+                total = calcular_total(carrinho_id)
+                data_compra = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+                # Gerar corpo HTML do e-mail
+                corpo_html = f"""
+                <html>
+                <body style="font-family: Arial, sans-serif; color: #333;">
+                    <h2>Olá {nome},</h2>
+                    <p>A tua compra foi concluída com sucesso em <b>{data_compra}</b>!</p>
+
+                    <h3>🧾 Resumo da compra:</h3>
+                    <table style="border-collapse: collapse; width: 100%; margin-top: 10px;">
+                        <tr style="background-color: #f2f2f2;">
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Produto</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Quantidade</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Preço Total</th>
+                        </tr>
+                        {''.join(f"<tr><td style='border: 1px solid #ddd; padding: 8px;'>{item['nome']}</td><td style='border: 1px solid #ddd; padding: 8px; text-align: center;'>{item['quantidade']}</td><td style='border: 1px solid #ddd; padding: 8px; text-align: right;'>€{item['total']:.2f}</td></tr>" for item in itens)}
+                    </table>
+
+                    <p style="margin-top: 20px; font-size: 1.1em;">
+                        <b>Total: €{total:.2f}</b>
+                    </p>
+
+                    <p>Obrigado por comprar na <b>Loja Checkpoint</b>! 🎮</p>
+                    <hr>
+                    <p style="font-size: 0.9em; color: #777;">
+                        Este e-mail foi enviado automaticamente. Não respondas a esta mensagem.
+                    </p>
+                </body>
+                </html>
+                """
+
                 enviar_email(
                     destinatario=email,
                     nome=nome,
-                    assunto="Confirmação de Compra",
-                    corpo="A tua compra foi concluída com sucesso!"
+                    assunto="🧾 Confirmação da tua compra - Loja Checkpoint",
+                    corpo_html=corpo_html
                 )
+
             notificar("Compra finalizada com sucesso. Email enviado!", "sucesso")
             break
+
 
         elif escolha == "6":
             historico_compras(user_id)
