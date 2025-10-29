@@ -47,22 +47,24 @@ python main.py
 ```
 
 ## 🧩 Estrutura do projeto
+| Ficheiro / Diretório | Descrição |
+|----------------------|------------|
+| `main.py` | Menu global e lógica principal |
+| `auth.py` | Autenticação e registo de utilizadores (Supabase) |
+| `clientes.py` | Perfil |
+| `produtos.py` / `produtos_utils.py` | Gestão de produtos |
+| `compras.py` | Lógica de compras e histórico |
+| `comparar_jogos.py` | Comparação de jogos no terminal |
+| `carrinho.py` | Implementação do carrinho de compras |
+| `avaliacoes.py` | Avaliação por estrelas |
+| `sessao.json` | Sessão do utilizador autenticado |
+| `comentarios.py` | Sistema de comentários e moderação |
+| `notificacao_email.py` | Envio de emails de confirmação e alertas |
+| `db.py` / `db.sql` | Lógica e estrutura da base de dados |
+| `config.json` | Configuração da aplicação |
+| `requirements.txt` | Dependências do projeto |
 
- ├── main.py                # Menu global e lógica principal
- ├── auth.py                # Autenticação e registo de utilizadores
- ├── compras.py             # Lógica de compras e histórico
- ├── carrinho.py            # Carrinho de compras
- ├── produtos.py            # Gestão de produtos
- ├── produtos_utils.py      # Algumas funções produtos
- ├── clientes.py            # Perfil
- ├── comentarios.py         # Sistema de comentários
- ├── avaliacoes.py          # Avaliação por estrelas
- ├── comparar_jogos.py      # Comparação de jogos no terminal
- ├── notificacao_email.py   # Envio de emails via SendGrid
- ├── db.py                  # Ligação e instância Supabase
- ├── sessao.json            # Sessão do utilizador autenticado
- ├── config.json            # Configuração de tema
- └── .env                   # Credenciais do Supabase e SendGrid
+---
 
  ## 💡 Próximas melhorias planeadas
 
@@ -95,6 +97,4 @@ python main.py
 
 ---
 
-📧 **Email:** [poisola42@gmail.com](mailto:poisola42@gmail.com)  
-💼 **Projeto:** [Loja Checkpoint](https://github.com/Deni-jpg/Loja-Checkpoint)
 
