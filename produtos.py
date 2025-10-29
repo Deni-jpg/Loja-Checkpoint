@@ -118,32 +118,4 @@ else:
     else:
         print("Opção inválida.")
 
-print(f"\n✅ Bem-vindo {user['nome']} ao menu de administração de produtos.")
 
-print("\nFunções disponíveis:")
-print("1 -> Adicionar produto")
-print("2 -> Listar produtos")
-print("3 -> Editar produto")
-print("4 -> Remover produto")
-print("5 -> Listar produtos com stock baixo")
-print("6 -> Listar os 3 produtos mais vendidos")
-
-try:
-    funcao = int(input("Escolha a função (número): "))
-    match funcao:
-        case 1:
-            adicionar_produto()
-        case 2:
-            listar_produtos()
-        case 3:
-            atualizar_produto()
-        case 4:
-            remover_produto()
-        case 5:
-            listar_produtos_com_stock_baixo()
-        case 6:
-            lista_produtos_mais_vendidos()
-        case _:
-            print("Opção inválida.")
-except ValueError:
-    print("Entrada inválida.")

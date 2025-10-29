@@ -167,19 +167,10 @@ def show_menu_header(theme, frame):
 def show_menu_options(theme, utilizador_logado):
     colors = THEME_COLORS[theme]
     for key, (label, _) in MODULE_MAP.items():
-        # Esconde "Login" (1) se já está autenticado
         if utilizador_logado and key == "1":
             continue
-
-        # Esconde "Registo" (2) só para clientes (admins podem criar novos utilizadores)
         if utilizador_logado and key == "2" and utilizador_logado.get("tipo") != "admin":
             continue
-
-        # 🔒 Esconde "Produtos" (3) se o utilizador não for admin
-        if utilizador_logado and key == "3" and utilizador_logado.get("tipo") != "admin":
-            continue
-
-        # Mostra as restantes opções
         emoji_color = colors["exit"] if key == "0" else colors["option"]
         star = " ⭐" if key == last_choice else ""
         print(color(f"{key}️⃣  {label}{star}", emoji_color))
