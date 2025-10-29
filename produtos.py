@@ -70,9 +70,53 @@ def remover_produto():
     
  
 user = carregar_sessao()
-if not user or user["tipo"] != "admin":
-    print("⛔ Acesso restrito. Apenas administradores podem gerir produtos.")
+user = carregar_sessao()
+if not user:
+    print("⛔ Precisas de fazer login para aceder aos produtos.")
     sys.exit()
+
+print(f"\n📦 Bem-vindo {user['nome']} ({user['tipo']}) ao menu de produtos.")
+
+# Menu diferente para clientes e admins
+if user["tipo"] == "admin":
+    print("\nFunções disponíveis (Admin):")
+    print("1 -> Adicionar produto")
+    print("2 -> Listar produtos")
+    print("3 -> Editar produto")
+    print("4 -> Remover produto")
+    print("5 -> Listar produtos com stock baixo")
+    print("6 -> Listar os 3 produtos mais vendidos")
+
+    try:
+        funcao = int(input("Escolha a função (número): "))
+        match funcao:
+            case 1:
+                adicionar_produto()
+            case 2:
+                listar_produtos()
+            case 3:
+                atualizar_produto()
+            case 4:
+                remover_produto()
+            case 5:
+                listar_produtos_com_stock_baixo()
+            case 6:
+                lista_produtos_mais_vendidos()
+            case _:
+                print("Opção inválida.")
+    except ValueError:
+        print("Entrada inválida.")
+
+else:
+    # Clientes só podem listar produtos
+    print("\nFunções disponíveis (Cliente):")
+    print("1 -> Ver produtos disponíveis")
+
+    escolha = input("Escolha uma opção: ").strip()
+    if escolha == "1":
+        listar_produtos()
+    else:
+        print("Opção inválida.")
 
 print(f"\n✅ Bem-vindo {user['nome']} ao menu de administração de produtos.")
 
