@@ -32,6 +32,7 @@ MODULE_MAP = {
     "4": ("🛒 Compras", "compras.py"),
     "5": ("💬 Comentários", "comentarios.py"),
     "6": ("⚙️ Configurações", None),
+    "7": ("⭐ Avaliações", "avaliacoes.py"),
     "0": ("🚪 Sair", None)
 }
 
