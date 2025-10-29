@@ -111,10 +111,13 @@ else:
     # Clientes só podem listar produtos
     print("\nFunções disponíveis (Cliente):")
     print("1 -> Ver produtos disponíveis")
+    print("2 -> Ver produtos mais vendidos")
 
     escolha = input("Escolha uma opção: ").strip()
     if escolha == "1":
         listar_produtos()
+    elif escolha == "2":
+        lista_produtos_mais_vendidos()
     else:
         print("Opção inválida.")
 
