@@ -13,6 +13,9 @@ import json
 from datetime import datetime
 from notificacao_email import enviar_email
 
+# 🔹 Importa o módulo de histórico detalhado
+import historico_compras as hist
+
 SESSAO_PATH = Path(__file__).parent / "sessao.json"
 
 def carregar_sessao():
@@ -43,6 +46,8 @@ def recomendar_produto(user_id):
             nome = produto_resp.data[0]["nome"]
             notificar(f"💡 Já compraste {nome}. Queres ver produtos semelhantes?", "info")
 
+
+# 🛒 MENU DE COMPRAS
 def menu_compras():
     sessao = carregar_sessao()
     if not sessao:
@@ -62,16 +67,19 @@ def menu_compras():
         print("3. Ver carrinho")
         print("4. Remover item")
         print("5. Finalizar compra")
-        print("6. Ver histórico de compras")
+        print("6. Ver histórico simples")
+        print("7. Ver histórico detalhado 🧾")
         if tipo == "admin":
-            print("7. 📊 Ver todas as compras (admin)")
-            print("8. 🔝 Produtos mais comprados")
+            print("8. 📊 Ver todas as compras (admin)")
+            print("9. 🔝 Produtos mais comprados")
         print("0. Voltar")
         escolha = input("Escolha: ").strip()
 
+        # 1️⃣ Ver produtos
         if escolha == "1":
             listar_produtos()
 
+        # 2️⃣ Adicionar ao carrinho
         elif escolha == "2":
             nome_busca = input("Digite parte do nome do jogo: ").strip()
             plataforma = input("Filtrar por plataforma (ou ENTER para todas): ").strip()
@@ -101,7 +109,7 @@ def menu_compras():
             except (ValueError, IndexError):
                 notificar("❌ Escolha inválida.", "erro")
 
-
+        # 3️⃣ Ver carrinho
         elif escolha == "3":
             itens = listar_itens(carrinho_id)
             if not itens:
@@ -112,11 +120,13 @@ def menu_compras():
                     print(f"{item['nome']} x{item['quantidade']} - €{item['total']:.2f}")
                 print(f"Total: €{calcular_total(carrinho_id):.2f}")
 
+        # 4️⃣ Remover item
         elif escolha == "4":
             produto_id = int(input("ID do produto a remover: "))
             remover_item(carrinho_id, produto_id)
             notificar("Item removido do carrinho.", "alerta")
 
+        # 5️⃣ Finalizar compra
         elif escolha == "5":
             finalizar_carrinho(carrinho_id, user_id)
             perfil = supabase.table("perfil").select("nome").eq("user_id", user_id).execute()
@@ -125,18 +135,15 @@ def menu_compras():
                 nome = perfil.data[0]["nome"]
                 email = sessao["email"]
 
-                # Obter detalhes da compra
                 itens = listar_itens(carrinho_id)
                 total = calcular_total(carrinho_id)
                 data_compra = datetime.now().strftime("%d/%m/%Y %H:%M")
 
-                # Gerar corpo HTML do e-mail
                 corpo_html = f"""
                 <html>
                 <body style="font-family: Arial, sans-serif; color: #333;">
                     <h2>Olá {nome},</h2>
                     <p>A tua compra foi concluída com sucesso em <b>{data_compra}</b>!</p>
-
                     <h3>🧾 Resumo da compra:</h3>
                     <table style="border-collapse: collapse; width: 100%; margin-top: 10px;">
                         <tr style="background-color: #f2f2f2;">
@@ -146,11 +153,9 @@ def menu_compras():
                         </tr>
                         {''.join(f"<tr><td style='border: 1px solid #ddd; padding: 8px;'>{item['nome']}</td><td style='border: 1px solid #ddd; padding: 8px; text-align: center;'>{item['quantidade']}</td><td style='border: 1px solid #ddd; padding: 8px; text-align: right;'>€{item['total']:.2f}</td></tr>" for item in itens)}
                     </table>
-
                     <p style="margin-top: 20px; font-size: 1.1em;">
                         <b>Total: €{total:.2f}</b>
                     </p>
-
                     <p>Obrigado por comprar na <b>Loja Checkpoint</b>! 🎮</p>
                     <hr>
                     <p style="font-size: 0.9em; color: #777;">
@@ -159,25 +164,29 @@ def menu_compras():
                 </body>
                 </html>
                 """
-
                 enviar_email(
                     destinatario=email,
                     nome=nome,
                     assunto="🧾 Confirmação da tua compra - Loja Checkpoint",
                     corpo_html=corpo_html
                 )
-
             notificar("Compra finalizada com sucesso. Email enviado!", "sucesso")
             break
 
-
+        # 6️⃣ Histórico simples
         elif escolha == "6":
-            historico_compras(user_id)
+            historico_simples(user_id)
 
-        elif escolha == "7" and tipo == "admin":
+        # 7️⃣ Histórico detalhado
+        elif escolha == "7":
+            hist.ver_historico_compras()
+
+        # 8️⃣ Admin – Ver todas as compras
+        elif escolha == "8" and tipo == "admin":
             ver_todas_compras()
 
-        elif escolha == "8" and tipo == "admin":
+        # 9️⃣ Admin – Produtos mais comprados
+        elif escolha == "9" and tipo == "admin":
             produtos_mais_comprados()
 
         elif escolha == "0":
@@ -186,7 +195,9 @@ def menu_compras():
         else:
             notificar("Opção inválida.", "erro")
 
-def historico_compras(user_id):
+
+# Histórico simples
+def historico_simples(user_id):
     response = supabase.table("compras").select("produto_id", "data").eq("user_id", user_id).execute()
     compras = response.data
 
@@ -201,6 +212,8 @@ def historico_compras(user_id):
         data_formatada = datetime.fromisoformat(c["data"]).strftime("%d/%m/%Y %H:%M")
         print(f"{nome} - Comprado em: {data_formatada}")
 
+
+# Admin: ver todas as compras
 def ver_todas_compras():
     response = supabase.table("compras").select("user_id", "produto_id", "data").execute()
     compras = response.data
@@ -216,6 +229,8 @@ def ver_todas_compras():
         data_formatada = datetime.fromisoformat(c["data"]).strftime("%d/%m/%Y %H:%M")
         print(f"User: {c['user_id']} - {nome} - {data_formatada}")
 
+
+# Admin: produtos mais comprados
 def produtos_mais_comprados():
     response = supabase.table("compras").select("produto_id").execute()
     compras = response.data
@@ -236,6 +251,7 @@ def produtos_mais_comprados():
         produto_resp = supabase.table("produtos").select("nome").eq("id", pid).execute()
         nome = produto_resp.data[0]["nome"] if produto_resp.data else "Desconhecido"
         print(f"{nome} - {total} compras")
+
 
 if __name__ == "__main__":
     menu_compras()
