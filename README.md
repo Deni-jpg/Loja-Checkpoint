@@ -21,8 +21,8 @@ O projeto simula uma loja de videojogos, onde utilizadores podem autenticar-se, 
 | ✅     | **Comentários**            | Clientes podem comentar produtos              |
 | ✅     | **Avaliações**             | Sistema de 1 a 5 estrelas                      |
 | ✅     | **Comparação de Jogos**    | Comparar produtos lado a lado no terminal     |
-| 🧩     | **Wishlist (Lista de Desejos)** | Guardar jogos para comprar mais tarde    |
-| 🧩     | **Histórico Detalhado**    | Mostrar compras com data e totais             |
+| ✅     | **Wishlist (Lista de Desejos)** | Guardar jogos para comprar mais tarde    |
+| ✅     | **Histórico Detalhado**    | Mostrar compras com data e totais             |
 | 🔜     | **Pontos de Fidelidade**   | Converter compras em pontos                   |
 | 🔜     | **Painel Administrativo**  | CRUD de produtos e estatísticas               |
 | 🔜     | **Promoções e Descontos**  | Preços promocionais no terminal               |
@@ -57,6 +57,7 @@ python main.py
 | `comparar_jogos.py` | Comparação de jogos no terminal |
 | `carrinho.py` | Implementação do carrinho de compras |
 | `avaliacoes.py` | Avaliação por estrelas |
+| `ui.py` | Interface visual unificada do terminal |
 | `sessao.json` | Sessão do utilizador autenticado |
 | `comentarios.py` | Sistema de comentários e moderação |
 | `notificacao_email.py` | Envio de emails de confirmação e alertas |
