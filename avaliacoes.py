@@ -1,91 +1,211 @@
 from db import supabase
 from datetime import datetime
+from ui import cabecalho, rodape, limpar_terminal, animar_carregamento
+from colorama import Fore, Style
+from pathlib import Path
+from tabulate import tabulate
 import json
 import sys
 
+SESSAO_PATH = Path(__file__).parent / "sessao.json"
+
+# === FUNÇÕES DE SESSÃO ===
 def carregar_sessao():
     try:
-        with open("sessao.json", "r", encoding="utf-8") as f:
+        with open(SESSAO_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except:
         return None
 
-def avaliar_produto(user_id):
-    produto = input("\nProduto que quer avaliar: ")
-    response = supabase.table("produtos").select("id", "nome").ilike("nome", f"%{produto}%").execute()
-    produtos = response.data
+# === NOTIFICAÇÕES COLORIDAS ===
+def notificar(mensagem, tipo="info"):
+    cores = {
+        "info": Fore.CYAN,
+        "sucesso": Fore.GREEN,
+        "erro": Fore.RED,
+        "alerta": Fore.YELLOW
+    }
+    cor = cores.get(tipo, Fore.WHITE)
+    print(f"{cor}🔔 {mensagem}{Style.RESET_ALL}")
+
+# === FUNÇÃO DE RENDERIZAÇÃO DE ESTRELAS ===
+def render_stars(media):
+    """Converte valor numérico (1–5) em estrelas visuais ⭐⭐⭐⭐☆"""
+    cheias = int(media)
+    meia = (media - cheias) >= 0.5
+    estrelas = "⭐" * cheias
+    if meia and cheias < 5:
+        estrelas += "✩"
+    estrelas += "☆" * (5 - len(estrelas))
+    return estrelas
+
+# === AVALIAR PRODUTO ===
+def avaliar_produto(user_id, nome):
+    limpar_terminal()
+    cabecalho("Avaliar Produto", utilizador=nome)
+
+    termo = input("🔎 Digite parte do nome do produto: ").strip()
+    animar_carregamento("A procurar produtos...")
+
+    produtos = (
+        supabase.table("produtos")
+        .select("id, nome")
+        .ilike("nome", f"%{termo}%")
+        .execute()
+        .data
+    )
 
     if not produtos:
-        print("❌ Produto não encontrado.")
+        notificar("❌ Produto não encontrado.", "erro")
+        rodape(utilizador=nome)
+        input("\nENTER para voltar...")
         return
 
-    for i, p in enumerate(produtos):
-        print(f"{i + 1}. {p['nome']}")
+    print("\n🎮 Produtos encontrados:")
+    for i, p in enumerate(produtos, start=1):
+        print(f"{i}. {p['nome']}")
+
     try:
-        index = int(input("\nEscolha o número do produto: ")) - 1
+        index = int(input("\n👉 Escolha o número do produto: ")) - 1
         produto_id = produtos[index]["id"]
     except:
-        print("Escolha inválida.")
+        notificar("❌ Escolha inválida.", "erro")
+        rodape(utilizador=nome)
+        input("\nENTER para voltar...")
         return
 
-    # Verifica se o utilizador já comprou o produto
-    compras = supabase.table("compras").select("id").eq("user_id", user_id).eq("produto_id", produto_id).execute()
+    animar_carregamento("A verificar compras...")
+    compras = (
+        supabase.table("compras")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("produto_id", produto_id)
+        .execute()
+    )
+
     if not compras.data:
-        print("⚠️ Só podes avaliar produtos que já compraste.")
+        notificar("⚠️ Só podes avaliar produtos que já compraste.", "alerta")
+        rodape(utilizador=nome)
+        input("\nENTER para voltar...")
         return
 
-    # Verifica se já avaliou
-    ja_avaliou = supabase.table("avaliacoes").select("*").eq("user_id", user_id).eq("produto_id", produto_id).execute()
+    ja_avaliou = (
+        supabase.table("avaliacoes")
+        .select("*")
+        .eq("user_id", user_id)
+        .eq("produto_id", produto_id)
+        .execute()
+    )
+
     if ja_avaliou.data:
-        print("⚠️ Já avaliou este produto. A avaliação será atualizada.")
+        notificar("⚠️ Já existe uma avaliação. A tua avaliação será atualizada.", "alerta")
 
     try:
-        estrelas = int(input("Classificação (1 a 5 estrelas): "))
+        estrelas = int(input("⭐ Classificação (1 a 5 estrelas): "))
         if estrelas < 1 or estrelas > 5:
             raise ValueError
     except ValueError:
-        print("Valor inválido.")
+        notificar("❌ Valor inválido. Insere um número entre 1 e 5.", "erro")
+        rodape(utilizador=nome)
+        input("\nENTER para voltar...")
         return
 
-    comentario = input("Comentário (opcional): ").strip()
+    comentario = input("💬 Comentário (opcional): ").strip()
 
     supabase.table("avaliacoes").upsert({
         "user_id": user_id,
         "produto_id": produto_id,
         "estrelas": estrelas,
-        "comentario": comentario
+        "comentario": comentario,
+        "data": datetime.now().isoformat()
     }).execute()
 
-    print(f"⭐ Avaliação registada: {estrelas} estrelas para {produtos[index]['nome']}")
+    notificar(f"✅ Avaliação registada: {estrelas} ⭐ para {produtos[index]['nome']}", "sucesso")
+    rodape(utilizador=nome)
+    input("\nENTER para voltar...")
 
-def ver_media_avaliacoes():
-    produtos = supabase.table("produtos").select("id", "nome").execute().data
-    print("\n📊 Médias de Avaliações:")
+# === VER MÉDIA DE AVALIAÇÕES (com tabela ⭐) ===
+def ver_media_avaliacoes(nome):
+    limpar_terminal()
+    cabecalho("Médias de Avaliação", utilizador=nome)
+
+    animar_carregamento("A calcular médias...")
+    produtos = supabase.table("produtos").select("id, nome").execute().data
+
+    if not produtos:
+        notificar("❌ Nenhum produto encontrado.", "erro")
+        rodape(utilizador=nome)
+        input("\nENTER para voltar...")
+        return
+
+    tabela = []
     for p in produtos:
-        avals = supabase.table("avaliacoes").select("estrelas").eq("produto_id", p["id"]).execute().data
+        avals = (
+            supabase.table("avaliacoes")
+            .select("estrelas")
+            .eq("produto_id", p["id"])
+            .execute()
+            .data
+        )
+
         if avals:
             media = sum(a["estrelas"] for a in avals) / len(avals)
-            print(f"{p['nome']} → ⭐ {media:.1f}/5 ({len(avals)} avaliações)")
+            tabela.append([
+                p["nome"],
+                render_stars(media),
+                f"{media:.1f}/5",
+                f"{len(avals)} avaliações"
+            ])
         else:
-            print(f"{p['nome']} → sem avaliações ainda.")
+            tabela.append([p["nome"], "—", "—", "Sem avaliações"])
 
-# 🚪 Entrada principal
-user = carregar_sessao()
-if not user:
-    print("⛔ Precisas de fazer login para avaliar.")
-    sys.exit()
+    print("\n" + Fore.MAGENTA + "📊 Avaliações de Produtos\n" + Style.RESET_ALL)
+    print(tabulate(tabela, headers=["Produto", "Classificação", "Média", "Total"], tablefmt="fancy_grid"))
 
-print(f"\n⭐ Bem-vindo {user['nome']} ({user['tipo']})")
+    rodape(utilizador=nome)
+    input("\nENTER para voltar...")
 
-if user["tipo"] == "cliente":
-    print("1 -> Avaliar produto")
-    print("2 -> Ver médias de avaliação")
-    escolha = input("Opção: ").strip()
-    if escolha == "1":
-        avaliar_produto(user["id"])
-    elif escolha == "2":
-        ver_media_avaliacoes()
-    else:
-        print("Opção inválida.")
-elif user["tipo"] == "admin":
-    ver_media_avaliacoes()
+# === MENU PRINCIPAL ===
+def menu_avaliacoes():
+    sessao = carregar_sessao()
+    if not sessao:
+        limpar_terminal()
+        cabecalho("Avaliações")
+        notificar("⛔ Precisas de fazer login para aceder às avaliações.", "erro")
+        rodape()
+        input("\nENTER para voltar...")
+        return
+
+    user_id = sessao["id"]
+    nome = sessao.get("nome", "Utilizador")
+    tipo = sessao.get("tipo", "cliente")
+
+    while True:
+        limpar_terminal()
+        cabecalho("Avaliações", utilizador=nome)
+
+        if tipo == "cliente":
+            print(Fore.MAGENTA + "⭐ Menu de Avaliações" + Style.RESET_ALL)
+            print("-" * 50)
+            print("1️⃣  Avaliar um produto comprado")
+            print("2️⃣  Ver médias de avaliação")
+            print("0️⃣  Voltar")
+            escolha = input("\n👉 Escolha uma opção: ").strip()
+
+            if escolha == "1":
+                avaliar_produto(user_id, nome)
+            elif escolha == "2":
+                ver_media_avaliacoes(nome)
+            elif escolha == "0":
+                break
+            else:
+                notificar("❌ Opção inválida.", "erro")
+                input("\nENTER para continuar...")
+
+        elif tipo == "admin":
+            ver_media_avaliacoes(nome)
+            break
+
+# === EXECUÇÃO DIRETA ===
+if __name__ == "__main__":
+    menu_avaliacoes()

@@ -18,7 +18,8 @@ def registar_utilizador(email: str, password: str, nome: str, tipo: str):
         supabase.table("perfil").insert({
             "user_id": res.user.id,
             "nome": nome,
-            "tipo": tipo
+            "tipo": tipo,
+            "email": email
         }).execute()
         print("Registo bem-sucedido.")
         return res.user

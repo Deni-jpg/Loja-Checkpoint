@@ -1,38 +1,68 @@
 from db import supabase
 from datetime import datetime
+from ui import cabecalho, rodape, limpar_terminal, animar_carregamento
+from colorama import Fore, Style
+from tabulate import tabulate
+from pathlib import Path
 import json
 import sys
 
+SESSAO_PATH = Path(__file__).parent / "sessao.json"
+
+# === Sessão ===
 def carregar_sessao():
     try:
-        with open("sessao.json", "r", encoding="utf-8") as f:
+        with open(SESSAO_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except:
         return None
 
-def fazer_comentario(user_id):
-    produto = input("\nQual o produto que quer comentar: ")
-    response = supabase.table("produtos").select("id", "nome").ilike("nome", f"%{produto}%").execute()
-    produtos = response.data
+# === Notificação colorida ===
+def notificar(msg, tipo="info"):
+    cores = {
+        "info": Fore.CYAN,
+        "sucesso": Fore.GREEN,
+        "erro": Fore.RED,
+        "alerta": Fore.YELLOW
+    }
+    icones = {
+        "info": "ℹ️",
+        "sucesso": "✅",
+        "erro": "❌",
+        "alerta": "⚠️"
+    }
+    print(f"{cores.get(tipo, Fore.WHITE)}{icones.get(tipo, '💬')} {msg}{Style.RESET_ALL}")
+
+# === Funções de comentários ===
+def fazer_comentario(user_id, nome):
+    limpar_terminal()
+    cabecalho("Fazer Comentário", utilizador=nome)
+
+    produto = input("\n🕹️  Nome do produto: ").strip()
+    animar_carregamento("A procurar produto...")
+    produtos = supabase.table("produtos").select("id", "nome").ilike("nome", f"%{produto}%").execute().data
 
     if not produtos:
-        print("Produto não encontrado.")
+        notificar("❌ Produto não encontrado.", "erro")
+        rodape(utilizador=nome)
+        input("\nENTER para voltar...")
         return
 
     if len(produtos) > 1:
-        print("\nProdutos encontrados:")
-        for i, p in enumerate(produtos):
-            print(f"{i + 1}. {p['nome']}")
+        print("\n📋 Produtos encontrados:")
+        for i, p in enumerate(produtos, start=1):
+            print(f"{i}. {p['nome']}")
         try:
-            index = int(input("\nNúmero do produto: ")) - 1
-            produto_id = produtos[index]["id"]
+            idx = int(input("\nNúmero do produto: ")) - 1
+            produto_id = produtos[idx]["id"]
         except:
-            print("Escolha inválida.")
+            notificar("⚠️ Escolha inválida.", "erro")
             return
     else:
         produto_id = produtos[0]["id"]
 
-    texto = input("\nEscreva o seu comentário: ")
+    texto = input("\n💬 Escreva o seu comentário: ").strip()
+    animar_carregamento("A guardar comentário...")
 
     supabase.table("comentarios").insert({
         "user_id": user_id,
@@ -41,189 +71,225 @@ def fazer_comentario(user_id):
         "aprovado": False
     }).execute()
 
-    print("Comentário adicionado com sucesso!")
+    notificar("✅ Comentário enviado para aprovação!", "sucesso")
+    rodape(utilizador=nome)
+    input("\nENTER para voltar...")
 
+def julgar_comentario(nome):
+    limpar_terminal()
+    cabecalho("Aprovar Comentários", utilizador=nome)
 
+    animar_carregamento("A carregar comentários pendentes...")
+    comentarios = supabase.table("comentarios").select("*").eq("aprovado", False).execute().data
 
-def julgar_comentario():
-    # Buscar apenas comentários não aprovados
+    if not comentarios:
+        notificar("📭 Não há comentários pendentes.", "info")
+        rodape(utilizador=nome)
+        input("\nENTER para voltar...")
+        return
+
+    tabela = [[i+1, c["id"], c["texto"]] for i, c in enumerate(comentarios)]
+    print(tabulate(tabela, headers=["Nº", "ID", "Comentário"], tablefmt="fancy_grid"))
+
+    try:
+        idx = int(input("\nNúmero do comentário a julgar: ")) - 1
+        comentario_id = comentarios[idx]["id"]
+    except:
+        notificar("❌ Escolha inválida.", "erro")
+        return
+
+    decisao = input("Aprovar este comentário? (s/n): ").lower()
+    if decisao == "s":
+        supabase.table("comentarios").update({"aprovado": True}).eq("id", comentario_id).execute()
+        notificar("✅ Comentário aprovado!", "sucesso")
+    elif decisao == "n":
+        supabase.table("comentarios").delete().eq("id", comentario_id).execute()
+        notificar("🗑️ Comentário rejeitado e removido.", "alerta")
+    else:
+        notificar("⚠️ Opção inválida.", "erro")
+
+    rodape(utilizador=nome)
+    input("\nENTER para voltar...")
+
+def listar_comentario_por_produto(nome):
+    limpar_terminal()
+    cabecalho("Listar Comentários", utilizador=nome)
+
+    produto = input("🕹️ Produto para ver comentários: ").strip()
+    animar_carregamento("A carregar comentários...")
+    produtos = supabase.table("produtos").select("id", "nome").ilike("nome", f"%{produto}%").execute().data
+
+    if not produtos:
+        notificar("❌ Produto não encontrado.", "erro")
+        rodape(utilizador=nome)
+        input("\nENTER para voltar...")
+        return
+
+    produto_id = produtos[0]["id"]
     comentarios = (
         supabase.table("comentarios")
         .select("*")
-        .eq("aprovado", False)
+        .eq("produto_id", produto_id)
+        .eq("aprovado", True)
         .execute()
         .data
     )
 
     if not comentarios:
-        print("Não há comentários pendentes de aprovação.")
-        return
-
-    for i, c in enumerate(comentarios):
-        print(f"{i + 1}. ID: {c['id']} | Texto: {c['texto']}")
-
-    try:
-        index = int(input("\nNúmero do comentário a julgar: ")) - 1
-        comentario_id = comentarios[index]["id"]
-    except:
-        print("Escolha inválida.")
-        return
-
-    decisao = input("Aprovar este comentário? (s = aprovar / n = rejeitar): ").lower()
-
-    if decisao == "s":
-        supabase.table("comentarios").update({"aprovado": True}).eq("id", comentario_id).execute()
-        print("✅ Comentário aprovado.")
-    elif decisao == "n":
-        supabase.table("comentarios").delete().eq("id", comentario_id).execute()
-        print("❌ Comentário rejeitado e removido.")
+        notificar("📭 Nenhum comentário aprovado para este produto.", "info")
     else:
-        print("Opção inválida.")
+        tabela = [[i+1, c["texto"]] for i, c in enumerate(comentarios)]
+        print(tabulate(tabela, headers=["Nº", "Comentário"], tablefmt="fancy_grid"))
 
+    rodape(utilizador=nome)
+    input("\nENTER para voltar...")
 
-def listar_comentario_por_produto():
-    produto = input("Produto para ver comentários: ")
+def remover_comentario_cliente(user_id, nome):
+    limpar_terminal()
+    cabecalho("Remover Comentário", utilizador=nome)
+
+    produto = input("🕹️ Produto do comentário: ").strip()
+    animar_carregamento("A procurar comentários...")
     produtos = supabase.table("produtos").select("id", "nome").ilike("nome", f"%{produto}%").execute().data
 
     if not produtos:
-        print("Produto não encontrado.")
+        notificar("❌ Produto não encontrado.", "erro")
+        rodape(utilizador=nome)
+        input("\nENTER para voltar...")
         return
 
-    for i, p in enumerate(produtos):
-        print(f"{i + 1}. {p['nome']}")
-    try:
-        index = int(input("\nNúmero do produto: ")) - 1
-        produto_id = produtos[index]["id"]
-    except:
-        print("Escolha inválida.")
-        return
-
+    produto_id = produtos[0]["id"]
     comentarios = (
-    supabase.table("comentarios")
-    .select("*")
-    .eq("produto_id", produto_id)
-    .eq("aprovado", True)
-    .execute()
-    .data
+        supabase.table("comentarios")
+        .select("*")
+        .eq("produto_id", produto_id)
+        .eq("user_id", user_id)
+        .execute()
+        .data
     )
-    if not comentarios:
-        print("Nenhum comentário encontrado.")
-        return
-
-    for i, c in enumerate(comentarios):
-        print(f"{i + 1}. Texto: {c['texto']} | Aprovado: {c['aprovado']}")
-
-
-def remover_comentario_cliente(user_id):
-    produto = input("Produto para remover comentário: ")
-    response = supabase.table("produtos").select("id", "nome", "plataforma").ilike("nome", f"%{produto}%").execute()
-    produtos = response.data
-
-    if not produtos:
-        print("Produto não encontrado.")
-        return
-
-    for i, p in enumerate(produtos):
-        print(f"{i + 1}. {p['nome']} | Plataforma: {p['plataforma']}")
-    try:
-        index = int(input("\nNúmero do produto: ")) - 1
-        produto_id = produtos[index]["id"]
-    except:
-        print("Escolha inválida.")
-        return
-
-    response_comentarios = supabase.table("comentarios").select("*").eq("produto_id", produto_id).eq("user_id", user_id).execute()
-    comentarios = response_comentarios.data
 
     if not comentarios:
-        print("Não há comentários seus neste produto.")
+        notificar("📭 Não há comentários teus neste produto.", "info")
+        rodape(utilizador=nome)
+        input("\nENTER para voltar...")
         return
 
-    for i, c in enumerate(comentarios):
-        print(f"{i + 1}. Texto: {c['texto']}")
+    tabela = [[i+1, c["texto"]] for i, c in enumerate(comentarios)]
+    print(tabulate(tabela, headers=["Nº", "Comentário"], tablefmt="fancy_grid"))
+
     try:
-        index = int(input("\nNúmero do comentário a remover: ")) - 1
-        comentario_id = comentarios[index]["id"]
+        idx = int(input("\nNúmero do comentário a remover: ")) - 1
+        comentario_id = comentarios[idx]["id"]
     except:
-        print("Escolha inválida.")
+        notificar("❌ Escolha inválida.", "erro")
         return
 
     if input("Confirmar remoção? (s/n): ").lower() == "s":
         supabase.table("comentarios").delete().eq("id", comentario_id).execute()
-        print("Comentário removido.")
+        notificar("🗑️ Comentário removido com sucesso.", "alerta")
     else:
-        print("Remoção cancelada.")
+        notificar("❌ Remoção cancelada.", "erro")
 
-def remover_comentario_admin():
-    produto = input("Produto para revisar comentários: ")
-    response = supabase.table("produtos").select("id", "nome").ilike("nome", f"%{produto}%").execute()
-    produtos = response.data
+    rodape(utilizador=nome)
+    input("\nENTER para voltar...")
+
+def remover_comentario_admin(nome):
+    limpar_terminal()
+    cabecalho("Remover Comentário (Admin)", utilizador=nome)
+
+    produto = input("🕹️ Produto a revisar: ").strip()
+    animar_carregamento("A carregar comentários...")
+    produtos = supabase.table("produtos").select("id", "nome").ilike("nome", f"%{produto}%").execute().data
 
     if not produtos:
-        print("Produto não encontrado.")
+        notificar("❌ Produto não encontrado.", "erro")
+        rodape(utilizador=nome)
+        input("\nENTER para voltar...")
         return
 
-    for i, p in enumerate(produtos):
-        print(f"{i + 1}. {p['nome']}")
-    try:
-        index = int(input("\nNúmero do produto: ")) - 1
-        produto_id = produtos[index]["id"]
-    except:
-        print("Escolha inválida.")
-        return
-
+    produto_id = produtos[0]["id"]
     comentarios = supabase.table("comentarios").select("*").eq("produto_id", produto_id).execute().data
+
     if not comentarios:
-        print("Nenhum comentário encontrado.")
+        notificar("📭 Nenhum comentário encontrado.", "info")
+    else:
+        tabela = [[i+1, c["id"], c["texto"], "✅" if c["aprovado"] else "⏳"] for i, c in enumerate(comentarios)]
+        print(tabulate(tabela, headers=["Nº", "ID", "Comentário", "Estado"], tablefmt="fancy_grid"))
+
+        try:
+            idx = int(input("\nNúmero do comentário a remover: ")) - 1
+            comentario_id = comentarios[idx]["id"]
+        except:
+            notificar("❌ Escolha inválida.", "erro")
+            return
+
+        if input("Confirmar remoção? (s/n): ").lower() == "s":
+            supabase.table("comentarios").delete().eq("id", comentario_id).execute()
+            notificar("🗑️ Comentário removido com sucesso.", "alerta")
+        else:
+            notificar("Remoção cancelada.", "info")
+
+    rodape(utilizador=nome)
+    input("\nENTER para voltar...")
+
+# === Menu principal ===
+def menu_comentarios():
+    sessao = carregar_sessao()
+    if not sessao:
+        limpar_terminal()
+        cabecalho("Comentários")
+        notificar("⛔ Precisas de fazer login para aceder aos comentários.", "erro")
+        rodape()
+        input("\nENTER para voltar...")
         return
 
-    for i, c in enumerate(comentarios):
-        print(f"{i + 1}. ID: {c['id']} | Texto: {c['texto']} | Aprovado: {c['aprovado']}")
-    try:
-        index = int(input("\nNúmero do comentário a remover: ")) - 1
-        comentario_id = comentarios[index]["id"]
-    except:
-        print("Escolha inválida.")
-        return
+    user_id = sessao["id"]
+    nome = sessao["nome"]
+    tipo = sessao["tipo"]
 
-    if input("Confirmar remoção? (s/n): ").lower() == "s":
-        supabase.table("comentarios").delete().eq("id", comentario_id).execute()
-        print("✅ Comentário removido pelo administrador.")
-    else:
-        print("Remoção cancelada.")
+    while True:
+        limpar_terminal()
+        cabecalho("Comentários", utilizador=nome)
 
+        if tipo == "cliente":
+            print(Fore.MAGENTA + "💬 Menu de Comentários" + Style.RESET_ALL)
+            print("-" * 50)
+            print("1️⃣  Fazer comentário")
+            print("2️⃣  Remover comentário")
+            print("0️⃣  Voltar")
+            escolha = input("\n👉 Escolha uma opção: ").strip()
 
+            if escolha == "1":
+                fazer_comentario(user_id, nome)
+            elif escolha == "2":
+                remover_comentario_cliente(user_id, nome)
+            elif escolha == "0":
+                break
+            else:
+                notificar("❌ Opção inválida.", "erro")
+                input("\nENTER para continuar...")
 
-# 🚪 Entrada principal
-user = carregar_sessao()
-if not user:
-    print("⛔ Precisas de fazer login para aceder ao menu de comentários.")
-    sys.exit()
+        elif tipo == "admin":
+            print(Fore.CYAN + "🛠️  Painel de Administração de Comentários" + Style.RESET_ALL)
+            print("-" * 50)
+            print("1️⃣  Listar comentários por produto")
+            print("2️⃣  Aprovar/Rejeitar comentários")
+            print("3️⃣  Remover comentário")
+            print("0️⃣  Voltar")
+            escolha = input("\n👉 Escolha uma opção: ").strip()
 
-print(f"\n💬 Bem-vindo {user['nome']} ({user['tipo']})")
+            if escolha == "1":
+                listar_comentario_por_produto(nome)
+            elif escolha == "2":
+                julgar_comentario(nome)
+            elif escolha == "3":
+                remover_comentario_admin(nome)
+            elif escolha == "0":
+                break
+            else:
+                notificar("❌ Opção inválida.", "erro")
+                input("\nENTER para continuar...")
 
-if user["tipo"] == "cliente":
-    print("1 -> Fazer comentário")
-    print("2 -> Remover comentário")
-    escolha = int(input("Opção: "))
-    if escolha == 1:
-        fazer_comentario(user["id"])
-    elif escolha == 2:
-        remover_comentario_cliente(user["id"])
-    else:
-        print("Opção inválida.")
-elif user["tipo"] == "admin":
-    print("1 -> Listar comentários por produto")
-    print("2 -> Aprovar/Rejeitar comentário")
-    print("3 -> Remover comentário")
-    escolha = int(input("Opção: "))
-    if escolha == 1:
-        listar_comentario_por_produto()
-    elif escolha == 2:
-        julgar_comentario()
-    elif escolha == 3:
-        remover_comentario_admin()
-    else:
-        print("Opção inválida.")
-else:
-    print("Tipo de utilizador desconhecido.")
+# === Execução direta ===
+if __name__ == "__main__":
+    menu_comentarios()

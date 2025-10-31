@@ -1,7 +1,8 @@
 from db import supabase
+from ui import cabecalho, rodape, limpar_terminal, animar_carregamento
+from colorama import Fore, Style
 from tabulate import tabulate
-import json
-import sys
+import json, sys
 
 def carregar_sessao():
     try:
@@ -10,63 +11,54 @@ def carregar_sessao():
     except:
         return None
 
-
 def escolher_jogo(excluir_ids=None):
-    """Permite ao utilizador procurar e escolher um jogo, com exclusão opcional."""
-    termo = input("\n🔍 Digite parte do nome do jogo (ou ENTER para listar todos): ").strip()
+    termo = input("\n🔍 Nome do jogo (ou ENTER para listar todos): ").strip()
 
     query = supabase.table("produtos").select("id, nome, preco, plataforma")
     if termo:
         query = query.ilike("nome", f"%{termo}%")
     if excluir_ids:
         query = query.not_.in_("id", excluir_ids)
-    response = query.execute()
 
-    produtos = response.data or []
+    animar_carregamento("A carregar jogos...")
+    produtos = query.execute().data or []
     if not produtos:
-        print("❌ Nenhum produto encontrado.")
+        print("❌ Nenhum jogo encontrado.")
         return None
 
-    print("\n📋 Jogos disponíveis:")
-    for i, p in enumerate(produtos, start=1):
-        preco_fmt = f"€{float(p['preco']):.2f}" if p.get("preco") is not None else "—"
-        print(f"{i}. {p['nome']} ({p['plataforma']}) - {preco_fmt}")
+    tabela = [[i+1, p["nome"], p["plataforma"], f"€{float(p['preco']):.2f}"] for i, p in enumerate(produtos)]
+    print(tabulate(tabela, headers=["Nº", "Nome", "Plataforma", "Preço"], tablefmt="fancy_grid"))
 
     try:
-        escolha = int(input("\nEscolhe o número do jogo: ").strip())
-        if 1 <= escolha <= len(produtos):
-            return produtos[escolha - 1]
-        else:
-            print("⚠️ Número inválido.")
-            return None
-    except ValueError:
+        idx = int(input("\nEscolha o número do jogo: ")) - 1
+        return produtos[idx]
+    except:
         print("⚠️ Escolha inválida.")
         return None
 
-
 def comparar_jogos():
-    user = carregar_sessao()
-    if not user:
+    sessao = carregar_sessao()
+    if not sessao:
         print("⛔ Precisas de fazer login para comparar jogos.")
         sys.exit()
 
-    print("\n🎮 Comparar Jogos")
+    nome = sessao["nome"]
+    limpar_terminal()
+    cabecalho("Comparar Jogos", utilizador=nome)
 
-    # Primeiro jogo
-    jogo1 = None
-    while not jogo1:
-        jogo1 = escolher_jogo()
+    print(Fore.MAGENTA + "\n🎮 Comparador de Jogos" + Style.RESET_ALL)
+    print("-" * 50)
 
-    # Segundo jogo
-    jogo2 = None
-    while not jogo2:
-        jogo2 = escolher_jogo(excluir_ids=[jogo1["id"]])
+    jogo1 = escolher_jogo()
+    if not jogo1:
+        return
+    jogo2 = escolher_jogo(excluir_ids=[jogo1["id"]])
+    if not jogo2:
+        return
 
     selecionados = [jogo1, jogo2]
-
-    # Pergunta se quer comparar mais
     while True:
-        extra = input("➕ Queres adicionar outro jogo à comparação? (s/n): ").lower().strip()
+        extra = input("➕ Adicionar outro jogo? (s/n): ").lower().strip()
         if extra == "s":
             novo = escolher_jogo(excluir_ids=[p["id"] for p in selecionados])
             if novo:
@@ -74,35 +66,22 @@ def comparar_jogos():
         else:
             break
 
-    print("\n🕒 A gerar comparação...")
+    animar_carregamento("A gerar comparação...")
 
-    # Buscar média de avaliações para cada jogo
     for p in selecionados:
-        avals = (
-            supabase.table("avaliacoes")
-            .select("estrelas")
-            .eq("produto_id", p["id"])
-            .execute()
-            .data
-            or []
-        )
+        avals = supabase.table("avaliacoes").select("estrelas").eq("produto_id", p["id"]).execute().data or []
         if avals:
             media = sum(a["estrelas"] for a in avals) / len(avals)
             p["avaliacao"] = f"{media:.1f} ⭐"
         else:
             p["avaliacao"] = "Sem avaliações"
 
-    # Construir tabela
-    tabela = []
-    for p in selecionados:
-        preco_fmt = f"€{float(p['preco']):.2f}" if p.get("preco") is not None else "—"
-        tabela.append([p["nome"], preco_fmt, p["plataforma"], p["avaliacao"]])
-
-    headers = ["Nome do Jogo", "Preço", "Plataforma", "Avaliação Média"]
-
+    tabela = [[p["nome"], f"€{p['preco']:.2f}", p["plataforma"], p["avaliacao"]] for p in selecionados]
     print("\n🆚 Comparação de Jogos:\n")
-    print(tabulate(tabela, headers=headers, tablefmt="fancy_grid"))
+    print(tabulate(tabela, headers=["Nome", "Preço", "Plataforma", "Avaliação Média"], tablefmt="fancy_grid"))
 
+    rodape(utilizador=nome)
+    input("\nENTER para voltar...")
 
 if __name__ == "__main__":
     comparar_jogos()
