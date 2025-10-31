@@ -1,6 +1,9 @@
 import sys
 import subprocess
 import json
+from rich.console import Console
+from rich.table import Table
+console = Console()
 import json
 import os
 import time
@@ -34,6 +37,7 @@ MODULE_MAP = {
     "6": ("⚙️ Configurações", None),
     "7": ("⭐ Avaliações", "avaliacoes.py"),
     "8": ("🆚 Comparar Jogos", "comparar_jogos.py"),
+    "9": ("🎁 Wishlist", "wishlist.py"),
     "0": ("🚪 Sair", None)
 }
 
