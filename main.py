@@ -1,84 +1,37 @@
-import sys
-import subprocess
-import json
-from rich.console import Console
-from rich.table import Table
-console = Console()
-import json
-import os
-import time
+import sys, os, time, json, subprocess, random, shutil, threading
+from datetime import datetime
 from pathlib import Path
-from itertools import cycle
-from auth import login_utilizador, registar_utilizador, login_admin
+from colorama import Fore, Style
+from tabulate import tabulate
 from db import supabase
+from auth import login_utilizador, registar_utilizador
 
-
-utilizador_logado = None
-
-try:
-    from colorama import Fore, Style, init
-    init(autoreset=True)
-    COLOR_ENABLED = True
-except ImportError:
-    COLOR_ENABLED = False
-
-# Diretório base e config
+# === CONFIGURAÇÕES ===
 BASE_DIR = Path(__file__).parent
 CONFIG_PATH = BASE_DIR / "config.json"
-last_choice = None
+SESSAO_PATH = BASE_DIR / "sessao.json"
 
-# Módulos disponíveis
-MODULE_MAP = {
-    "1": ("👤 Login", None),
-    "2": ("🆕 Registo", None),
-    "3": ("📦 Produtos", "produtos.py"),
-    "4": ("🛒 Compras", "compras.py"),
-    "5": ("💬 Comentários", "comentarios.py"),
-    "6": ("⚙️ Configurações", None),
-    "7": ("⭐ Avaliações", "avaliacoes.py"),
-    "8": ("🆚 Comparar Jogos", "comparar_jogos.py"),
-    "9": ("🎁 Wishlist", "wishlist.py"),
-    "0": ("🚪 Sair", None)
-}
+utilizador_logado = None
+stop_animation = False
 
-# Cores por tema
-THEME_COLORS = {
-    "dark": {
-        "header": Fore.BLUE,
-        "title": Fore.GREEN,
-        "option": Fore.CYAN,
-        "exit": Fore.RED,
-        "prompt": Fore.YELLOW,
-        "info": Fore.MAGENTA
-    },
-    "light": {
-        "header": Fore.BLACK,
-        "title": Fore.BLUE,
-        "option": Fore.MAGENTA,
-        "exit": Fore.RED,
-        "prompt": Fore.GREEN,
-        "info": Fore.CYAN
-    }
-}
+# === MENU ===
+MENU_ITEMS = [
+    ["1", "🔐 Login", "Entrar na sua conta"],
+    ["2", "🆕 Registo", "Criar uma nova conta"],
+    ["3", "📦 Produtos", "Ver e procurar jogos disponíveis"],
+    ["4", "🛒 Compras", "Adicionar e finalizar compras"],
+    ["5", "💬 Comentários", "Ler e deixar feedback nos produtos"],
+    ["7", "⭐ Avaliações", "Avaliar produtos comprados"],
+    ["8", "🆚 Comparar Jogos", "Comparar preços e avaliações"],
+    ["9", "🎁 Wishlist", "Guardar jogos favoritos"],
+    ["6", "🛠  Configurações", "Alterar tema e preferências"],
+    ["0", "🚪 Sair", "Fechar o programa"]
+]
 
-TEXTS = {
-    "welcome": "👋 Bem-vindo à Loja Checkpoint!",
-    "choose": "👉 Escolha uma opção: ",
-    "invalid": "❌ Opção inválida. Tente novamente.",
-    "exit": "👋 A sair do sistema. Obrigado por visitar!",
-    "back": "🔙 Pressione ENTER para voltar ao menu...",
-    "running": "▶ A executar",
-    "not_found": "⚠️  Ficheiro não encontrado",
-    "done": "✅ Execução concluída.",
-    "interrupted": "⛔ Execução interrompida.",
-    "error": "❌ Erro ao executar o ficheiro:",
-    "config_title": "⚙️ Alterar configurações",
-    "theme_prompt": "🎨 Tema (dark/light): ",
-    "config_saved": "✅ Tema atualizado.",
-    "config_invalid": "❌ Valor inválido. Nenhuma alteração feita."
-}
+# === FUNÇÕES AUXILIARES ===
+def color(text, color_code):
+    return f"{color_code}{text}{Style.RESET_ALL}"
 
-# Carrega ou cria config.json
 def load_config():
     default = {"theme": "dark"}
     if not CONFIG_PATH.exists():
@@ -91,13 +44,8 @@ def load_config():
         return default
 
 def save_config(config):
-    try:
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-            json.dump(config, f, indent=4)
-    except Exception as e:
-        print(color(f"Erro ao guardar configurações: {e}", Fore.RED))
-
-SESSAO_PATH = BASE_DIR / "sessao.json"
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=4)
 
 def guardar_sessao(user_dict):
     with open(SESSAO_PATH, "w", encoding="utf-8") as f:
@@ -114,170 +62,128 @@ def limpar_sessao():
     if SESSAO_PATH.exists():
         os.remove(SESSAO_PATH)
 
-# Aplica cor se possível
-def color(text, color_code):
-    if not COLOR_ENABLED:
-        return text
-    return f"{color_code}{text}{Style.RESET_ALL}"
-
-# Executa script
 def run_script(filename: str):
     path = BASE_DIR / filename
     if not path.exists():
-        print(color(f"{TEXTS['not_found']}: {filename}", Fore.RED))
+        print(f"⚠️ Ficheiro não encontrado: {filename}")
         return
+    print(f"\n▶ A executar {filename}...\n")
+    subprocess.run([sys.executable, str(path)], check=False)
+    print("\n✅ Execução concluída.")
 
-    print(color(f"\n{TEXTS['running']} {filename}...\n", Fore.CYAN))
-    try:
-        subprocess.run([sys.executable, str(path)], check=False)
-        print(color(f"\n{TEXTS['done']}", Fore.GREEN))
-    except KeyboardInterrupt:
-        print(color(f"\n{TEXTS['interrupted']}", Fore.YELLOW))
-    except Exception as e:
-        print(color(f"\n{TEXTS['error']} {e}", Fore.RED))
+# === CABEÇALHO FIXO ===
+def cabecalho(nome, tema="dark"):
+    largura = shutil.get_terminal_size().columns
+    metade = largura // 2
+    cor_estado = Fore.GREEN if nome else Fore.RED
+    estado = f"{cor_estado}{'🟢 Online como ' + nome if nome else '🔴 Offline - Inicia sessão para aceder a todas as opções'}{Style.RESET_ALL}"
+    agora = datetime.now().strftime("🕒 %d/%m/%Y %H:%M")
 
+    print(Fore.LIGHTBLACK_EX + "=" * largura + Style.RESET_ALL)
+    print(Fore.CYAN + "🛍️  LOJA CHECKPOINT - MENU GLOBAL".center(largura) + Style.RESET_ALL)
+    print(Fore.LIGHTBLACK_EX + "=" * largura + Style.RESET_ALL)
+    print(estado.ljust(metade) + f"{Fore.LIGHTWHITE_EX}{agora}{Style.RESET_ALL}".rjust(metade))
+    print(Fore.LIGHTBLACK_EX + "=" * largura + Style.RESET_ALL + "\n")
 
-def login_menu():
-    global utilizador_logado
-    print("\n🔐 Login")
-    email = input("Email: ")
-    password = input("Password: ")
-    user = login_utilizador(email, password)
-    if user:
-        perfil = supabase.table("perfil").select("nome", "tipo").eq("user_id", user.id).execute()
-        if perfil.data:
-            nome = perfil.data[0]["nome"]
-            tipo = perfil.data[0]["tipo"]
-            print(color(f"\n✅ Bem-vindo, {nome} ({tipo})", Fore.GREEN))
-            utilizador_logado = {"id": user.id, "nome": nome, "tipo": tipo}
-        else:
-            print(color("⚠️ Perfil não encontrado.", Fore.YELLOW))
-    else:
-        print(color("⛔ Login falhou. Verifica credenciais ou email não verificado.", Fore.RED))
+# === RODAPÉ FIXO ===
+def rodape(nome=None, tema="dark"):
+    largura = shutil.get_terminal_size().columns
+    texto_tema = f"🎨 Tema: {tema.capitalize()}"
+    texto_user = f"👤 Utilizador: {nome}" if nome else "👤 Utilizador: não autenticado"
+    assinatura = "🏁 Loja Checkpoint 2025"
+    linha = Fore.LIGHTBLACK_EX + "═" * largura + Style.RESET_ALL
+    rodape = f"{texto_tema} | {texto_user} | {assinatura}"
+    print("\n" + linha)
+    print(Fore.LIGHTWHITE_EX + rodape.center(largura) + Style.RESET_ALL)
+    print(linha)
 
-def registo_menu(email, password, nome, tipo):   
-    registar_utilizador(email, password, nome, tipo)
-    
-    print(color(f"\n✅ Registo bem sucessedido!", Fore.GREEN))
-
-# Cabeçalho animado
-def show_menu_header(theme, frame):
-    colors = THEME_COLORS[theme]
-    title = f"🛍️  LOJA CHECKPOINT - MENU GLOBAL {frame}"
-    print(color("\n" + "═" * 50, colors["header"]))
-    print(color(title.center(50), colors["title"]))
-    print(color("═" * 50, colors["header"]))
-    time.sleep(0.2)
-
-# Opções do menu com animação
-def show_menu_options(theme, utilizador_logado):
-    colors = THEME_COLORS[theme]
-    for key, (label, _) in MODULE_MAP.items():
-        if utilizador_logado and key == "1":
-            continue
-        if utilizador_logado and key == "2" and utilizador_logado.get("tipo") != "admin":
-            continue
-        emoji_color = colors["exit"] if key == "0" else colors["option"]
-        star = " ⭐" if key == last_choice else ""
-        print(color(f"{key}️⃣  {label}{star}", emoji_color))
-        time.sleep(0.1)
-
-    print(color("─" * 50, colors["header"]))
-    time.sleep(0.1)
-
-
-
-
-# Menu principal
+# === MENU PRINCIPAL ===
 def main_menu():
-    global last_choice, utilizador_logado
+    global utilizador_logado
     utilizador_logado = carregar_sessao()
     config = load_config()
-    theme = config["theme"]
-    frame_cycle = cycle(["◐", "◓", "◑", "◒"])
 
-    print(color(f"\n{TEXTS['welcome']}", THEME_COLORS[theme]["info"]))
     while True:
-        frame = next(frame_cycle)
-        show_menu_header(theme, frame)
-        show_menu_options(theme, utilizador_logado)
+        os.system("cls" if os.name == "nt" else "clear")
 
-        escolha = input(color(TEXTS["choose"], THEME_COLORS[theme]["prompt"])).strip()
+        nome = utilizador_logado.get("nome") if utilizador_logado else None
+        cabecalho(nome, tema=config.get("theme"))
 
-        if escolha not in MODULE_MAP:
-            print(color(f"{TEXTS['invalid']}\n", Fore.RED))
-            time.sleep(0.5)
-            continue
+        headers = ["Nº", "Opção", "Descrição"]
+        print(tabulate(MENU_ITEMS, headers=headers, tablefmt="fancy_grid"))
 
-        label, filename = MODULE_MAP[escolha]
-        last_choice = escolha
+        rodape(
+            nome=utilizador_logado.get("nome") if utilizador_logado else None,
+            tema=config.get("theme")
+        )
+
+        print("\n" + Fore.YELLOW + "👉 Escolha uma opção:" + Style.RESET_ALL, end=" ")
+        escolha = input().strip()
 
         if escolha == "0":
             limpar_sessao()
-            print(color(f"\n{TEXTS['exit']}", THEME_COLORS[theme]["title"]))
+            print("\n👋 A sair do sistema. Obrigado por visitar!\n")
             break
 
         elif escolha == "1":
-            print("\n🔐 Login")
-            email = input("Email: ")
-            password = input("Password: ")
+            email = input("Email: ").strip()
+            password = input("Password: ").strip()
             user = login_utilizador(email, password)
             if user:
-                perfil = supabase.table("perfil").select("nome", "tipo").eq("user_id", user.id).execute()
+                perfil = supabase.table("perfil").select("nome, tipo").eq("user_id", user.id).execute()
                 if perfil.data:
                     nome = perfil.data[0]["nome"]
                     tipo = perfil.data[0]["tipo"]
-                    print(color(f"\n✅ Bem-vindo, {nome} ({tipo})", Fore.GREEN))
-                    utilizador_logado = {"id": user.id, "nome": nome, "tipo": tipo, "email" : user.email}
+                    utilizador_logado = {"id": user.id, "nome": nome, "tipo": tipo, "email": user.email}
                     guardar_sessao(utilizador_logado)
+                    print(f"\n✅ Bem-vindo, {nome} ({tipo})\n")
+                    time.sleep(1)
                 else:
-                    print(color("⚠️ Perfil não encontrado.", Fore.YELLOW))
+                    print("⚠️ Perfil não encontrado.")
             else:
-                print(color("⛔ Login falhou. Verifica credenciais ou email não verificado.", Fore.RED))
+                print("⛔ Login falhou. Verifica credenciais.")
             continue
 
         elif escolha == "2":
-            print("\n🔐 Registo")
-
             nome = input("Nome: ").strip()
             email = input("Email: ").strip()
             password = input("Password: ").strip()
-
-            # Verifica se o utilizador atual é admin
-            if utilizador_logado and utilizador_logado.get("tipo") == "admin":
-                print(color("👑 Estás autenticado como admin. O novo utilizador será admin também.", Fore.YELLOW))
-                tipo = "admin"
-            elif utilizador_logado:
-                print(color("⛔ Já estás autenticado. Não podes fazer novo registo agora.", Fore.RED))
-                tipo = "cliente"
-            else:
-                tipo = "cliente"
-
-            registo_menu(email, password, nome, tipo)
+            tipo = "cliente"
+            registar_utilizador(email, password, nome, tipo)
+            print("✅ Registo efetuado com sucesso!\n")
+            time.sleep(1)
             continue
-
-
 
         elif escolha == "6":
-            print(color(f"\n{TEXTS['config_title']}", THEME_COLORS[theme]["info"]))
-            new_theme = input(TEXTS["theme_prompt"]).strip().lower()
-            if new_theme in THEME_COLORS:
+            print("\n⚙️ Alterar configurações")
+            new_theme = input("🎨 Tema (dark/light): ").strip().lower()
+            if new_theme in ["dark", "light"]:
                 config["theme"] = new_theme
                 save_config(config)
-                theme = new_theme
-                print(color(TEXTS["config_saved"], Fore.GREEN))
+                print("✅ Tema atualizado.")
             else:
-                print(color(TEXTS["config_invalid"], Fore.RED))
-            input(color(f"\n{TEXTS['back']}", THEME_COLORS[theme]["prompt"]))
+                print("❌ Valor inválido.")
+            input("\n🔙 Pressione ENTER para voltar ao menu...")
             continue
 
-        # Executa script associado, se existir
-        if filename:
-            run_script(filename)
-            if escolha != "4":
-                input(color(f"\n{TEXTS['back']}", THEME_COLORS[theme]["prompt"]))
+        elif escolha == "3":
+            run_script("produtos.py")
+        elif escolha == "4":
+            run_script("compras.py")
+        elif escolha == "5":
+            run_script("comentarios.py")
+        elif escolha == "7":
+            run_script("avaliacoes.py")
+        elif escolha == "8":
+            run_script("comparar_jogos.py")
+        elif escolha == "9":
+            run_script("wishlist.py")
+        else:
+            print("⚠️ Opção inválida.")
+            time.sleep(1)
 
+        input("\n🔙 Pressione ENTER para voltar ao menu...")
 
-
+# === EXECUÇÃO ===
 if __name__ == "__main__":
     main_menu()
