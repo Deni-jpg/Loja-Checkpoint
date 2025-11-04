@@ -1,4 +1,4 @@
-import sys, os, time, json, subprocess, random, shutil, threading
+import sys, os, time, json, subprocess, random, shutil, threading, re
 from datetime import datetime
 from pathlib import Path
 from colorama import Fore, Style
@@ -71,6 +71,20 @@ def run_script(filename: str):
     subprocess.run([sys.executable, str(path)], check=False)
     print("\n✅ Execução concluída.")
 
+# === FUNÇÕES DE VALIDAÇÃO ===
+def validar_email(email):
+    """Valida o formato do email."""
+    return re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email) is not None
+
+def validar_password(password):
+    """Password deve ter pelo menos 6 caracteres."""
+    return len(password) >= 6
+
+def utilizador_existe(email):
+    """Verifica se já existe um utilizador com este email."""
+    response = supabase.table("perfil").select("email").eq("email", email).execute()
+    return bool(response.data)
+
 # === CABEÇALHO FIXO ===
 def cabecalho(nome, tema="dark"):
     largura = shutil.get_terminal_size().columns
@@ -126,8 +140,20 @@ def main_menu():
             break
 
         elif escolha == "1":
+            # === LOGIN COM VALIDAÇÃO ===
             email = input("Email: ").strip()
             password = input("Password: ").strip()
+
+            if not email or not password:
+                print("❌ Erro: preenche todos os campos.")
+                time.sleep(1)
+                continue
+
+            if not validar_email(email):
+                print("❌ Erro: formato de email inválido.")
+                time.sleep(1)
+                continue
+
             user = login_utilizador(email, password)
             if user:
                 perfil = supabase.table("perfil").select("nome, tipo").eq("user_id", user.id).execute()
@@ -147,10 +173,32 @@ def main_menu():
             continue
 
         elif escolha == "2":
+            # === REGISTO COM VALIDAÇÃO ===
             nome = input("Nome: ").strip()
             email = input("Email: ").strip()
             password = input("Password: ").strip()
             tipo = "cliente"
+
+            if not nome or not email or not password:
+                print("❌ Erro: todos os campos são obrigatórios.")
+                time.sleep(1)
+                continue
+
+            if not validar_email(email):
+                print("❌ Erro: formato de email inválido.")
+                time.sleep(1)
+                continue
+
+            if not validar_password(password):
+                print("❌ Erro: a password deve ter pelo menos 6 caracteres.")
+                time.sleep(1)
+                continue
+
+            if utilizador_existe(email):
+                print("⚠️ Já existe um utilizador com esse email.")
+                time.sleep(1)
+                continue
+
             registar_utilizador(email, password, nome, tipo)
             print("✅ Registo efetuado com sucesso!\n")
             time.sleep(1)
