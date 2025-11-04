@@ -140,8 +140,10 @@ def main_menu():
                     time.sleep(1)
                 else:
                     print("⚠️ Perfil não encontrado.")
+                    time.sleep(1)
             else:
                 print("⛔ Login falhou. Verifica credenciais.")
+                time.sleep(1)
             continue
 
         elif escolha == "2":
