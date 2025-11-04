@@ -4,7 +4,7 @@ from pathlib import Path
 from colorama import Fore, Style
 from tabulate import tabulate
 from db import supabase
-from auth import login_utilizador, registar_utilizador
+from auth import login_utilizador, registar_utilizador, recuperar_password
 
 # === CONFIGURAÇÕES ===
 BASE_DIR = Path(__file__).parent
@@ -126,25 +126,32 @@ def main_menu():
             break
 
         elif escolha == "1":
-            email = input("Email: ").strip()
-            password = input("Password: ").strip()
-            user = login_utilizador(email, password)
-            if user:
-                perfil = supabase.table("perfil").select("nome, tipo").eq("user_id", user.id).execute()
-                if perfil.data:
-                    nome = perfil.data[0]["nome"]
-                    tipo = perfil.data[0]["tipo"]
-                    utilizador_logado = {"id": user.id, "nome": nome, "tipo": tipo, "email": user.email}
-                    guardar_sessao(utilizador_logado)
-                    print(f"\n✅ Bem-vindo, {nome} ({tipo})\n")
-                    time.sleep(1)
+            print("\n🔐 Login ou Recuperação de Senha")
+            print("1️⃣  Fazer Login")
+            print("2️⃣  Esqueci-me da Senha")
+            sub = input("\n👉 Escolha uma opção: ").strip()
+
+            if sub == "1":
+                email = input("Email: ").strip()
+                password = input("Password: ").strip()
+                user = login_utilizador(email, password)
+                if user:
+                    perfil = supabase.table("perfil").select("nome, tipo").eq("user_id", user.id).execute()
+                    if perfil.data:
+                        nome = perfil.data[0]["nome"]
+                        tipo = perfil.data[0]["tipo"]
+                        utilizador_logado = {"id": user.id, "nome": nome, "tipo": tipo, "email": user.email}
+                        guardar_sessao(utilizador_logado)
+                        print(f"\n✅ Bem-vindo, {nome} ({tipo})\n")
+                        time.sleep(1)
                 else:
-                    print("⚠️ Perfil não encontrado.")
+                    print("⛔ Login falhou. Verifica credenciais.")
                     time.sleep(1)
-            else:
-                print("⛔ Login falhou. Verifica credenciais.")
-                time.sleep(1)
-            continue
+
+            elif sub == "2":
+                email = input("\n📧 Introduz o teu email de conta: ").strip()
+                recuperar_password(email)
+                input("\nENTER para voltar ao menu...")
 
         elif escolha == "2":
             nome = input("Nome: ").strip()
@@ -185,6 +192,13 @@ def main_menu():
             time.sleep(1)
 
         input("\n🔙 Pressione ENTER para voltar ao menu...")
+
+def recuperar_password(email: str):
+    try:
+        supabase.auth.reset_password_email(email)
+        print("📧 Email de recuperação enviado com sucesso.")
+    except Exception as e:
+        print("❌ Erro ao enviar email de recuperação:", str(e))
 
 # === EXECUÇÃO ===
 if __name__ == "__main__":
