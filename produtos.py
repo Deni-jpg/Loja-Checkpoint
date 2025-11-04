@@ -19,25 +19,25 @@ def carregar_sessao():
 # === Notificação colorida ===
 def notificar(msg, tipo="info"):
     cores = {
-        "info": Fore.CYAN,
+        "info":    Fore.CYAN,
         "sucesso": Fore.GREEN,
-        "erro": Fore.RED,
-        "alerta": Fore.YELLOW
+        "erro":    Fore.RED,
+        "alerta":  Fore.YELLOW
     }
     icones = {
-        "info": "ℹ️",
+        "info":    "ℹ️",
         "sucesso": "✅",
-        "erro": "❌",
-        "alerta": "⚠️"
+        "erro":    "❌",
+        "alerta":  "⚠️"
     }
     print(f"{cores.get(tipo, Fore.WHITE)}{icones.get(tipo, '💬')} {msg}{Style.RESET_ALL}")
 
 # === Validações & Leitura Segura ===
-def _parse_float_pt(valor_str: str) -> float:
+def _parse_float_pt(valor_str):
     """Aceita '9.99' ou '9,99' e converte para float."""
     return float(valor_str.replace(",", ".").strip())
 
-def ler_texto_obrigatorio(prompt: str) -> str:
+def ler_texto_obrigatorio(prompt):
     """Lê texto não vazio."""
     while True:
         valor = input(prompt).strip()
@@ -45,7 +45,7 @@ def ler_texto_obrigatorio(prompt: str) -> str:
             return valor
         notificar("❌ Este campo é obrigatório.", "erro")
 
-def ler_preco_positivo(prompt: str) -> float:
+def ler_preco_positivo(prompt):
     """Lê um preço > 0 (aceita vírgulas)."""
     while True:
         bruto = input(prompt).strip()
@@ -57,7 +57,7 @@ def ler_preco_positivo(prompt: str) -> float:
         except Exception:
             notificar("❌ Preço inválido. Introduz um número maior que 0 (ex.: 19,99).", "erro")
 
-def ler_stock_nao_negativo(prompt: str) -> int:
+def ler_stock_nao_negativo(prompt):
     """Lê um stock inteiro >= 0."""
     while True:
         bruto = input(prompt).strip()
@@ -69,7 +69,7 @@ def ler_stock_nao_negativo(prompt: str) -> int:
         except Exception:
             notificar("❌ Stock inválido. Introduz um número inteiro igual ou maior que 0.", "erro")
 
-def ler_id_inteiro(prompt: str) -> int:
+def ler_id_inteiro(prompt):
     """Lê um ID inteiro válido."""
     while True:
         bruto = input(prompt).strip()
@@ -78,7 +78,11 @@ def ler_id_inteiro(prompt: str) -> int:
         except Exception:
             notificar("❌ ID inválido. Introduz um número inteiro.", "erro")
 
-def validar_produto(dados: dict) -> tuple[bool, list[str]]:
+def confirmar(prompt="Confirmar? (s/n): "):
+    """Confirmação simples com 's' para sim."""
+    return input(prompt).strip().lower() == "s"
+
+def validar_produto(dados):
     """
     Validação final (defensiva) antes de escrever na BD.
     Retorna (ok: bool, erros: list[str])
@@ -97,7 +101,6 @@ def validar_produto(dados: dict) -> tuple[bool, list[str]]:
     if stock is None or not isinstance(stock, int) or stock < 0:
         erros.append("Stock deve ser um inteiro igual ou maior que 0.")
 
-    # Regras adicionais recomendadas
     plataforma = (dados.get("plataforma") or "").strip()
     if not plataforma:
         erros.append("Plataforma é obrigatória.")
@@ -107,6 +110,17 @@ def validar_produto(dados: dict) -> tuple[bool, list[str]]:
         erros.append("Descrição não pode exceder 1000 caracteres.")
 
     return (len(erros) == 0, erros)
+
+# === Acesso auxiliar à BD ===
+def obter_produto_por_id(produto_id):
+    """Devolve o produto (dict) se existir, caso contrário None."""
+    try:
+        resp = supabase.table("produtos").select("*").eq("id", produto_id).limit(1).execute()
+        dados = resp.data or []
+        return dados[0] if dados else None
+    except Exception as ex:
+        notificar(f"❌ Erro ao consultar produto: {ex}", "erro")
+        return None
 
 # === Operações ===
 def adicionar_produto(nome_utilizador):
@@ -154,6 +168,14 @@ def atualizar_produto(nome_utilizador):
 
     produto_id = ler_id_inteiro("\n🆔 ID do produto a atualizar: ")
 
+    # Verifica existência
+    produto_atual = obter_produto_por_id(produto_id)
+    if not produto_atual:
+        notificar("❌ Produto inexistente. Verifica o ID e tenta novamente.", "erro")
+        rodape(utilizador=nome_utilizador)
+        input("\nENTER para voltar...")
+        return
+
     nome = ler_texto_obrigatorio("🕹️ Novo nome: ")
     plataforma = ler_texto_obrigatorio("🎮 Nova plataforma: ")
     preco = ler_preco_positivo("💰 Novo preço (€): ")
@@ -192,18 +214,41 @@ def remover_produto(nome_utilizador):
     cabecalho("Remover Produto", utilizador=nome_utilizador)
 
     listar_produtos(modo="visual")
+
     produto_id = ler_id_inteiro("\n🆔 ID do produto a remover: ")
 
-    confirm = input("⚠️ Confirmar remoção? (s/n): ").strip().lower()
-    if confirm == "s":
-        try:
-            animar_carregamento("A remover produto...")
-            supabase.table("produtos").delete().eq("id", produto_id).execute()
-            notificar("🗑️ Produto removido com sucesso!", "alerta")
-        except Exception as ex:
-            notificar(f"❌ Erro ao remover produto: {ex}", "erro")
-    else:
+    # ✅ Validação: impedir remoção de ID inexistente
+    produto = obter_produto_por_id(produto_id)
+    if not produto:
+        notificar("❌ ID inexistente. Não é possível remover um produto que não existe.", "erro")
+        rodape(utilizador=nome_utilizador)
+        input("\nENTER para voltar...")
+        return
+
+    print(
+        Fore.YELLOW
+        + f"\nVai remover: [{produto_id}] {produto.get('nome')} "
+          f"(Stock: {produto.get('stock')}, Preço: {produto.get('preco')}€)"
+        + Style.RESET_ALL
+    )
+
+    if not confirmar("⚠️ Confirmar remoção? (s/n): "):
         notificar("Remoção cancelada.", "info")
+        rodape(utilizador=nome_utilizador)
+        input("\nENTER para voltar...")
+        return
+
+    try:
+        animar_carregamento("A remover produto...")
+        # Confirma quantos registos foram removidos (protege contra concorrência)
+        resp = supabase.table("produtos").delete().eq("id", produto_id).select("id").execute()
+        removidos = len(resp.data or [])
+        if removidos == 0:
+            notificar("⚠️ O produto já não existia. Nenhuma remoção efetuada.", "alerta")
+        else:
+            notificar("🗑️ Produto removido com sucesso!", "alerta")
+    except Exception as ex:
+        notificar(f"❌ Erro ao remover produto: {ex}", "erro")
 
     rodape(utilizador=nome_utilizador)
     input("\nENTER para voltar...")
@@ -212,18 +257,18 @@ def listar_produtos_com_stock_baixo(nome_utilizador):
     limpar_terminal()
     cabecalho("Stock Baixo", utilizador=nome_utilizador)
 
+    animar_carregamento("A verificar stock...")
     try:
-        animar_carregamento("A verificar stock...")
         response = supabase.table("produtos").select("nome, stock").lt("stock", 3).execute()
         produtos = response.data or []
     except Exception as ex:
+        notificar(f"❌ Erro ao carregar produtos: {ex}", "erro")
         produtos = []
-        notificar(f"❌ Erro ao obter produtos: {ex}", "erro")
 
     if not produtos:
         notificar("📦 Nenhum produto com stock baixo!", "info")
     else:
-        tabela = [[p.get("nome", ""), p.get("stock", 0)] for p in produtos]
+        tabela = [[p["nome"], p["stock"]] for p in produtos]
         print(tabulate(tabela, headers=["Produto", "Stock"], tablefmt="fancy_grid"))
 
     rodape(utilizador=nome_utilizador)
@@ -232,18 +277,19 @@ def listar_produtos_com_stock_baixo(nome_utilizador):
 def listar_produtos_mais_vendidos(nome_utilizador):
     limpar_terminal()
     cabecalho("Top 3 Produtos Mais Vendidos", utilizador=nome_utilizador)
+    animar_carregamento("A carregar dados...")
+
     try:
-        animar_carregamento("A carregar dados...")
         response = supabase.table("produtos").select("nome, vendas").order("vendas", desc=True).limit(3).execute()
         produtos = response.data or []
     except Exception as ex:
+        notificar(f"❌ Erro ao carregar dados: {ex}", "erro")
         produtos = []
-        notificar(f"❌ Erro ao obter ranking de vendas: {ex}", "erro")
 
     if not produtos:
         notificar("📭 Nenhum produto registado ainda.", "info")
     else:
-        tabela = [[i + 1, p.get("nome", ""), p.get("vendas", 0)] for i, p in enumerate(produtos)]
+        tabela = [[i+1, p["nome"], p["vendas"]] for i, p in enumerate(produtos)]
         print(tabulate(tabela, headers=["#", "Produto", "Vendas"], tablefmt="fancy_grid"))
 
     rodape(utilizador=nome_utilizador)
@@ -280,21 +326,13 @@ def menu_produtos():
             escolha = input("\n👉 Escolha uma opção: ").strip()
 
             match escolha:
-                case "1":
-                    adicionar_produto(nome)
-                case "2":
-                    listar_produtos(modo="visual")
-                    input("\nENTER para voltar...")
-                case "3":
-                    atualizar_produto(nome)
-                case "4":
-                    remover_produto(nome)
-                case "5":
-                    listar_produtos_com_stock_baixo(nome)
-                case "6":
-                    listar_produtos_mais_vendidos(nome)
-                case "0":
-                    break
+                case "1": adicionar_produto(nome)
+                case "2": listar_produtos(modo="visual")
+                case "3": atualizar_produto(nome)
+                case "4": remover_produto(nome)
+                case "5": listar_produtos_com_stock_baixo(nome)
+                case "6": listar_produtos_mais_vendidos(nome)
+                case "0": break
                 case _:
                     notificar("❌ Opção inválida.", "erro")
                     input("\nENTER para continuar...")
@@ -309,7 +347,6 @@ def menu_produtos():
             escolha = input("\n👉 Escolha uma opção: ").strip()
             if escolha == "1":
                 listar_produtos(modo="visual", utilizador=nome)
-                input("\nENTER para voltar...")
             elif escolha == "2":
                 listar_produtos_mais_vendidos(nome)
             elif escolha == "0":
