@@ -1,3 +1,17 @@
+"""
+Módulo de avaliações de produtos (terminal).
+
+Funcionalidades:
+- Cliente avalia um produto comprado (1 a 5 estrelas + comentário opcional).
+- Visualização de médias por produto com representação em estrelas.
+- Menu de avaliações (cliente e admin) integrando com UI em terminal.
+
+Dependências:
+- Supabase (tabelas: `produtos`, `compras`, `avaliacoes`)
+- Utilitários de UI (cabecalho, rodape, limpar_terminal, animar_carregamento)
+- `colorama` e `tabulate` para visualização amigável.
+"""
+
 from db import supabase
 from datetime import datetime
 from ui import cabecalho, rodape, limpar_terminal, animar_carregamento
@@ -9,16 +23,34 @@ import sys
 
 SESSAO_PATH = Path(__file__).parent / "sessao.json"
 
+
 # === FUNÇÕES DE SESSÃO ===
 def carregar_sessao():
+    """
+    Carrega a sessão do utilizador a partir do ficheiro local `sessao.json`.
+
+    Returns:
+        dict | None: Dicionário com chaves esperadas (`id`, `nome`, `tipo`) ou `None`.
+    """
     try:
         with open(SESSAO_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except:
         return None
 
+
 # === NOTIFICAÇÕES COLORIDAS ===
 def notificar(mensagem, tipo="info"):
+    """
+    Apresenta uma notificação colorida no terminal.
+
+    Args:
+        mensagem (str): Texto a mostrar.
+        tipo (str): 'info', 'sucesso', 'erro' ou 'alerta'.
+
+    Side Effects:
+        - Imprime no terminal usando `colorama`.
+    """
     cores = {
         "info": Fore.CYAN,
         "sucesso": Fore.GREEN,
@@ -28,9 +60,21 @@ def notificar(mensagem, tipo="info"):
     cor = cores.get(tipo, Fore.WHITE)
     print(f"{cor}🔔 {mensagem}{Style.RESET_ALL}")
 
+
 # === FUNÇÃO DE RENDERIZAÇÃO DE ESTRELAS ===
 def render_stars(media):
-    """Converte valor numérico (1–5) em estrelas visuais ⭐⭐⭐⭐☆"""
+    """
+    Converte um valor float (1.0–5.0) numa barra de estrelas legível.
+
+    Exemplo:
+        4.5 -> "⭐⭐⭐⭐✩" (✩ como meia estrela)
+
+    Args:
+        media (float): Média calculada do produto (0–5).
+
+    Returns:
+        str: String com estrelas cheias e vazias.
+    """
     cheias = int(media)
     meia = (media - cheias) >= 0.5
     estrelas = "⭐" * cheias
@@ -39,14 +83,34 @@ def render_stars(media):
     estrelas += "☆" * (5 - len(estrelas))
     return estrelas
 
+
 # === AVALIAR PRODUTO ===
 def avaliar_produto(user_id, nome):
+    """
+    Permite ao utilizador avaliar um produto que já tenha comprado.
+
+    Fluxo:
+        - Busca produtos por termo (ilike no nome).
+        - Valida se o utilizador comprou o produto selecionado.
+        - Upsert em `avaliacoes` com estrelas (1–5) e comentário opcional.
+
+    Args:
+        user_id (str): ID do utilizador autenticado.
+        nome (str): Nome do utilizador (UI).
+
+    Returns:
+        None
+
+    Side Effects:
+        - Lê tabelas `produtos` e `compras`.
+        - Grava/atualiza registo em `avaliacoes`.
+        - Interação completa via terminal.
+    """
     limpar_terminal()
     cabecalho("Avaliar Produto", utilizador=nome)
 
     termo = input("🔎 Digite parte do nome do produto: ").strip()
     animar_carregamento("A procurar produtos...")
-
     produtos = (
         supabase.table("produtos")
         .select("id, nome")
@@ -82,7 +146,6 @@ def avaliar_produto(user_id, nome):
         .eq("produto_id", produto_id)
         .execute()
     )
-
     if not compras.data:
         notificar("⚠️ Só podes avaliar produtos que já compraste.", "alerta")
         rodape(utilizador=nome)
@@ -96,7 +159,6 @@ def avaliar_produto(user_id, nome):
         .eq("produto_id", produto_id)
         .execute()
     )
-
     if ja_avaliou.data:
         notificar("⚠️ Já existe uma avaliação. A tua avaliação será atualizada.", "alerta")
 
@@ -124,14 +186,28 @@ def avaliar_produto(user_id, nome):
     rodape(utilizador=nome)
     input("\nENTER para voltar...")
 
-# === VER MÉDIA DE AVALIAÇÕES (com tabela ⭐) ===
+
+# === VER MÉDIA DE AVALIAÇÕES ===
 def ver_media_avaliacoes(nome):
+    """
+    Apresenta uma tabela com médias de avaliação por produto.
+
+    Args:
+        nome (str): Nome do utilizador para UI (cliente/admin).
+
+    Returns:
+        None
+
+    Side Effects:
+        - Lê `produtos` e `avaliacoes`.
+        - Calcula média e total de avaliações por produto.
+        - Imprime tabela com estrelas e estatísticas.
+    """
     limpar_terminal()
     cabecalho("Médias de Avaliação", utilizador=nome)
-
     animar_carregamento("A calcular médias...")
-    produtos = supabase.table("produtos").select("id, nome").execute().data
 
+    produtos = supabase.table("produtos").select("id, nome").execute().data
     if not produtos:
         notificar("❌ Nenhum produto encontrado.", "erro")
         rodape(utilizador=nome)
@@ -147,7 +223,6 @@ def ver_media_avaliacoes(nome):
             .execute()
             .data
         )
-
         if avals:
             media = sum(a["estrelas"] for a in avals) / len(avals)
             tabela.append([
@@ -161,12 +236,23 @@ def ver_media_avaliacoes(nome):
 
     print("\n" + Fore.MAGENTA + "📊 Avaliações de Produtos\n" + Style.RESET_ALL)
     print(tabulate(tabela, headers=["Produto", "Classificação", "Média", "Total"], tablefmt="fancy_grid"))
-
     rodape(utilizador=nome)
     input("\nENTER para voltar...")
 
+
 # === MENU PRINCIPAL ===
 def menu_avaliacoes():
+    """
+    Loop de menu para funcionalidades de avaliação.
+
+    Comportamento:
+        - Se não houver sessão válida, informa e retorna ao chamador.
+        - Para clientes: permite avaliar produto e ver médias.
+        - Para admin: mostra diretamente as médias.
+
+    Returns:
+        None
+    """
     sessao = carregar_sessao()
     if not sessao:
         limpar_terminal()
@@ -187,11 +273,11 @@ def menu_avaliacoes():
         if tipo == "cliente":
             print(Fore.MAGENTA + "⭐ Menu de Avaliações" + Style.RESET_ALL)
             print("-" * 50)
-            print("1️⃣  Avaliar um produto comprado")
-            print("2️⃣  Ver médias de avaliação")
-            print("0️⃣  Voltar")
-            escolha = input("\n👉 Escolha uma opção: ").strip()
+            print("1️⃣ Avaliar um produto comprado")
+            print("2️⃣ Ver médias de avaliação")
+            print("0️⃣ Voltar")
 
+            escolha = input("\n👉 Escolha uma opção: ").strip()
             if escolha == "1":
                 avaliar_produto(user_id, nome)
             elif escolha == "2":
@@ -203,8 +289,10 @@ def menu_avaliacoes():
                 input("\nENTER para continuar...")
 
         elif tipo == "admin":
+            # Para admin, mostra as médias diretamente e sai
             ver_media_avaliacoes(nome)
             break
+
 
 # === EXECUÇÃO DIRETA ===
 if __name__ == "__main__":

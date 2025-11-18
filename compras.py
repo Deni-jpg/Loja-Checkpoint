@@ -1,3 +1,19 @@
+"""
+Módulo de fluxo de compras em terminal.
+
+Este módulo orquestra o fluxo de compras do utilizador na aplicação de terminal:
+- gestão de carrinho (listar, adicionar, remover, finalizar),
+- listagem de produtos com busca simples e **busca avançada** (plataforma, faixa de preço e ordenação),
+- histórico de compras,
+- e, para administradores, visão agregada de compras e top de produtos.
+
+Integrações:
+- Base de dados via Supabase (tabelas: `produtos`, `compras`);
+- UI utilitária (cabeçalho/rodapé/animações) e mensagens coloridas no terminal.
+
+Nota: Este módulo não gere autenticação; a sessão do utilizador é lida de `sessao.json`.
+"""
+
 from carrinho import (
     obter_ou_criar_carrinho,
     adicionar_item,
@@ -20,16 +36,38 @@ import historico_compras as hist
 
 SESSAO_PATH = Path(__file__).parent / "sessao.json"
 
+
 # === Sessão ===
 def carregar_sessao():
+    """
+    Lê os dados da sessão de utilizador a partir de `sessao.json`.
+
+    Returns:
+        dict | None: Dicionário com atributos mínimos esperados:
+            - id (str): ID do utilizador;
+            - nome (str): Nome a apresentar no cabeçalho;
+            - tipo (str): 'cliente' ou 'admin'.
+        Retorna `None` se o ficheiro não existir ou estiver inválido.
+    """
     try:
         with open(SESSAO_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except:
         return None
 
+
 # === Notificação colorida ===
 def notificar(msg, tipo="info"):
+    """
+    Apresenta uma mensagem colorida e com ícone no terminal.
+
+    Args:
+        msg (str): Texto da mensagem a apresentar.
+        tipo (str): Nível da mensagem. Aceita: 'info', 'sucesso', 'erro', 'alerta'.
+
+    Side Effects:
+        - Imprime no terminal com estilos do `colorama`.
+    """
     cores = {
         "info": Fore.CYAN,
         "sucesso": Fore.GREEN,
@@ -44,19 +82,38 @@ def notificar(msg, tipo="info"):
     }
     print(f"{cores.get(tipo, Fore.WHITE)}{icones.get(tipo, '💬')} {msg}{Style.RESET_ALL}")
 
+
 # === Helpers de entrada numérica (preço) ===
 def _parse_float_pt(valor_str: str):
     """
-    Aceita '9.99' ou '9,99' e devolve float. Retorna None se inválido.
+    Converte um texto numérico com vírgula ou ponto em `float`.
+
+    Exemplos válidos: '9,99', '9.99', '  19,5 '.
+
+    Args:
+        valor_str (str): Texto a converter.
+
+    Returns:
+        float | None: Valor convertido ou `None` se inválido.
     """
     try:
         return float(str(valor_str).replace(",", ".").strip())
     except Exception:
         return None
 
+
 def _input_preco_opcional(prompt: str):
     """
-    Lê um preço opcional (ENTER = None). Valida número >= 0.
+    Lê um preço opcional do utilizador (ENTER = None), garantindo número >= 0.
+
+    Args:
+        prompt (str): Prompt a apresentar.
+
+    Returns:
+        float | None: Número não negativo digitado ou `None` se vazio.
+
+    Side Effects:
+        - Pede input no terminal e re-prompta em caso de erro.
     """
     while True:
         bruto = input(prompt).strip()
@@ -68,11 +125,30 @@ def _input_preco_opcional(prompt: str):
             continue
         return v
 
+
 # === Busca avançada + adicionar ao carrinho ===
 def adicionar_via_busca_avancada(carrinho_id, user_id):
     """
-    Busca avançada por produtos e permite adicionar um item ao carrinho.
-    Filtros: nome (opcional), plataforma(s), preço min/max, ordenação.
+    Executa a busca avançada de produtos e adiciona um item ao carrinho.
+
+    Filtros suportados:
+        - Nome (ilike)
+        - Plataforma(s) (uma ou várias, separadas por vírgula)
+        - Preço mínimo/máximo (ambos opcionais; aceitam vírgula ou ponto)
+        - Ordenação por `preco`, `nome` ou `stock` nas direções asc/desc
+
+    Args:
+        carrinho_id (int | str): Identificador do carrinho atual.
+        user_id (str): Identificador do utilizador (não é usado no filtro, mas mantido por coerência).
+
+    Returns:
+        None
+
+    Side Effects:
+        - Consulta `public.produtos` via Supabase.
+        - Imprime tabela de resultados (`tabulate`).
+        - Solicita seleção/quantidade e chama `adicionar_item(...)`.
+        - Apresenta mensagens de estado/erro no terminal.
     """
     print("\n🔎 Filtro avançado (ENTER = ignorar):")
     nome_busca = input("   • Nome contém: ").strip()
@@ -138,8 +214,23 @@ def adicionar_via_busca_avancada(carrinho_id, user_id):
     except Exception:
         notificar("❌ Erro ao adicionar produto (índice ou quantidade inválidos).", "erro")
 
+
 # === Recomendar produto ===
 def recomendar_produto(user_id):
+    """
+    Sugere um produto com base na última compra do utilizador.
+
+    Args:
+        user_id (str): Identificador do utilizador.
+
+    Returns:
+        None
+
+    Side Effects:
+        - Lê a última compra em `compras`.
+        - Busca nome do produto em `produtos`.
+        - Imprime uma sugestão no terminal (mensagem informativa).
+    """
     response = supabase.table("compras").select("produto_id").eq("user_id", user_id).execute()
     comprados = [c["produto_id"] for c in response.data or []]
     if comprados:
@@ -148,8 +239,29 @@ def recomendar_produto(user_id):
         if produto:
             notificar(f"💡 Já compraste {produto[0]['nome']}. Vê produtos semelhantes!", "info")
 
+
 # === Menu de compras ===
 def menu_compras():
+    """
+    Loop principal do menu de compras (interface de terminal).
+
+    Pré-condições:
+        - `sessao.json` deve existir e conter `id`, `nome`, `tipo`.
+
+    Fluxos:
+        1) Listar produtos
+        2) Adicionar ao carrinho (busca simples **ou** avançada)
+        3) Ver carrinho
+        4) Remover item
+        5) Finalizar compra
+        6) Ver histórico simples
+        7) Ver histórico detalhado
+        8) (admin) Ver todas as compras
+        9) (admin) Top produtos
+
+    Side Effects:
+        - Interações no terminal, chamadas à BD e mudanças no estado do carrinho.
+    """
     sessao = carregar_sessao()
     if not sessao:
         limpar_terminal()
@@ -275,8 +387,23 @@ def menu_compras():
             notificar("❌ Opção inválida.", "erro")
             input("\nENTER para continuar...")
 
+
 # === Histórico simples ===
 def historico_simples(user_id, nome):
+    """
+    Mostra uma tabela simples das compras do utilizador.
+
+    Args:
+        user_id (str): Identificador do utilizador atual.
+        nome (str): Nome do utilizador para UI.
+
+    Returns:
+        None
+
+    Side Effects:
+        - Lê `compras` por `user_id` e nomes dos produtos.
+        - Imprime uma tabela (`Produto` x `Data`) no terminal.
+    """
     limpar_terminal()
     cabecalho("Histórico de Compras", utilizador=nome)
     animar_carregamento("A carregar histórico...")
@@ -294,8 +421,22 @@ def historico_simples(user_id, nome):
     rodape(utilizador=nome)
     input("\nENTER para voltar...")
 
+
 # === Admin: ver todas as compras ===
 def ver_todas_compras(nome):
+    """
+    Mostra uma lista agregada de todas as compras (admin).
+
+    Args:
+        nome (str): Nome do utilizador (admin) para UI.
+
+    Returns:
+        None
+
+    Side Effects:
+        - Lê `compras` e resolve nomes de produto.
+        - Imprime tabela (`Utilizador`, `Produto`, `Data`) no terminal.
+    """
     limpar_terminal()
     cabecalho("Todas as Compras", utilizador=nome)
     animar_carregamento("A carregar compras...")
@@ -313,8 +454,22 @@ def ver_todas_compras(nome):
     rodape(utilizador=nome)
     input("\nENTER para voltar...")
 
+
 # === Admin: produtos mais comprados ===
 def produtos_mais_comprados(nome):
+    """
+    Exibe o top de produtos por contagem de compras (admin).
+
+    Args:
+        nome (str): Nome do utilizador (admin) para UI.
+
+    Returns:
+        None
+
+    Side Effects:
+        - Conta ocorrências de `produto_id` em `compras`.
+        - Resolve nomes dos produtos e imprime ranking no terminal.
+    """
     limpar_terminal()
     cabecalho("Top Produtos", utilizador=nome)
     animar_carregamento("A calcular ranking...")
@@ -335,6 +490,7 @@ def produtos_mais_comprados(nome):
     print(tabulate(tabela, headers=["Produto", "Nº Compras"], tablefmt="fancy_grid"))
     rodape(utilizador=nome)
     input("\nENTER para voltar...")
+
 
 # === Execução direta ===
 if __name__ == "__main__":
