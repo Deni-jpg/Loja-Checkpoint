@@ -1,3 +1,17 @@
+"""
+Módulo de gestão da Wishlist da Loja Checkpoint.
+
+Este módulo permite ao utilizador autenticado:
+    - Gerir a sessão local (ficheiro ``sessao.json``).
+    - Adicionar produtos à wishlist.
+    - Ver os itens atuais da wishlist.
+    - Remover produtos da wishlist.
+    - Interagir através de um menu de terminal.
+
+A wishlist é armazenada na tabela ``wishlist`` da base de dados Supabase,
+relacionando utilizadores (``user_id``) com produtos (``produto_id``).
+"""
+
 from db import supabase
 from pathlib import Path
 from datetime import datetime
@@ -6,17 +20,44 @@ from ui import cabecalho, rodape, limpar_terminal, animar_carregamento
 from colorama import Fore, Style
 
 SESSAO_PATH = Path(__file__).parent / "sessao.json"
+"""pathlib.Path: Caminho para o ficheiro de sessão local do utilizador."""
+
 
 # === FUNÇÕES DE SESSÃO ===
 def carregar_sessao():
+    """Carrega a sessão do utilizador a partir do ficheiro ``sessao.json``.
+
+    Tenta ler o ficheiro definido em :data:`SESSAO_PATH` e fazer o parse
+    do respetivo conteúdo JSON.
+
+    Returns:
+        dict | None: Dicionário com os dados da sessão
+        (por exemplo, ``{"id": ..., "nome": ...}``) ou ``None`` se o
+        ficheiro não existir ou ocorrer um erro na leitura.
+    """
     try:
         with open(SESSAO_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except:
         return None
 
+
 # === NOTIFICAÇÕES COLORIDAS ===
 def notificar(mensagem, tipo="info"):
+    """Mostra uma notificação colorida no terminal.
+
+    As cores variam consoante o tipo de mensagem:
+        - ``info`` → ciano
+        - ``sucesso`` → verde
+        - ``erro`` → vermelho
+        - ``alerta`` → amarelo
+
+    Args:
+        mensagem (str): Texto a apresentar.
+        tipo (str, optional): Tipo de notificação. Pode ser
+            ``"info"``, ``"sucesso"``, ``"erro"`` ou ``"alerta"``.
+            Por omissão é ``"info"``.
+    """
     cores = {
         "info": Fore.CYAN,
         "sucesso": Fore.GREEN,
@@ -26,8 +67,21 @@ def notificar(mensagem, tipo="info"):
     cor = cores.get(tipo, Fore.WHITE)
     print(f"{cor}🔔 {mensagem}{Style.RESET_ALL}")
 
+
 # === MENU WISHLIST ===
 def menu_wishlist():
+    """Menu principal de gestão da wishlist.
+
+    Requer que o utilizador esteja autenticado (sessão válida).
+
+    Opções:
+        1. Adicionar produto à wishlist.
+        2. Ver wishlist.
+        3. Remover produto da wishlist.
+        0. Voltar (sair do menu).
+
+    A função é interativa (inputs/prints) e não devolve valor.
+    """
     sessao = carregar_sessao()
     if not sessao:
         limpar_terminal()
@@ -64,8 +118,26 @@ def menu_wishlist():
             notificar("❌ Opção inválida.", "erro")
             input("\n🔙 ENTER para continuar...")
 
+
 # === ➕ Adicionar produto ===
 def adicionar_produto_wishlist(user_id, nome):
+    """Adiciona um produto à wishlist do utilizador.
+
+    Fluxo:
+        1. Pede ao utilizador para escrever parte do nome do produto.
+        2. Pesquisa produtos na tabela ``produtos`` com base no termo.
+        3. Lista os resultados encontrados.
+        4. Permite selecionar um produto pelo número.
+        5. Verifica se o produto já existe na wishlist.
+        6. Caso não exista, insere o registo na tabela ``wishlist``.
+
+    Args:
+        user_id (int | str): ID do utilizador na base de dados.
+        nome (str): Nome do utilizador (usado na interface).
+
+    Returns:
+        None: A função interage via terminal e base de dados, sem devolver valor.
+    """
     limpar_terminal()
     cabecalho("Adicionar à Wishlist", utilizador=nome)
 
@@ -122,8 +194,22 @@ def adicionar_produto_wishlist(user_id, nome):
     rodape(utilizador=nome)
     input("\nENTER para voltar...")
 
+
 # === 👀 Ver wishlist ===
 def ver_wishlist(user_id, nome):
+    """Mostra os itens atuais da wishlist do utilizador.
+
+    Para cada item na tabela ``wishlist``:
+        - Obtém os dados do produto na tabela ``produtos``.
+        - Mostra nome, plataforma e preço.
+
+    Args:
+        user_id (int | str): ID do utilizador.
+        nome (str): Nome do utilizador para exibição na interface.
+
+    Returns:
+        None: Apenas imprime a lista no terminal.
+    """
     limpar_terminal()
     cabecalho("Wishlist — Ver Itens", utilizador=nome)
 
@@ -161,11 +247,27 @@ def ver_wishlist(user_id, nome):
     rodape(utilizador=nome)
     input("\nENTER para voltar...")
 
+
 # === ❌ Remover produto ===
 def remover_produto_wishlist(user_id, nome):
+    """Remove um ou mais produtos da wishlist do utilizador.
+
+    O utilizador escreve parte do nome do produto, e são:
+        - Procurados produtos na tabela ``produtos`` com nome semelhante.
+        - Removidas todas as entradas correspondentes aos IDs encontrados
+          na tabela ``wishlist`` para o utilizador atual.
+
+    Args:
+        user_id (int | str): ID do utilizador.
+        nome (str): Nome do utilizador para exibição na interface.
+
+    Returns:
+        None: A função apenas atualiza a base de dados e mostra mensagens
+        no terminal.
+    """
     limpar_terminal()
     cabecalho("Remover da Wishlist", utilizador=nome)
-    
+
     termo = input("🗑️  Digite parte do nome do produto a remover: ").strip()
     animar_carregamento("A procurar produto para remover...")
     produtos = (
@@ -188,6 +290,7 @@ def remover_produto_wishlist(user_id, nome):
 
     rodape(utilizador=nome)
     input("\nENTER para voltar...")
+
 
 # === EXECUÇÃO DIRETA ===
 if __name__ == "__main__":

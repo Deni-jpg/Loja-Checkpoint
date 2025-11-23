@@ -1,10 +1,40 @@
+"""
+Módulo para visualização do histórico detalhado de compras do utilizador.
+
+Este módulo:
+- Carrega a sessão do utilizador a partir de ``sessao.json``.
+- Obtém compras associadas ao utilizador na base de dados Supabase.
+- Agrupa compras por produto, contando quantidades e última data de compra.
+- Obtém informações do produto (nome, preço, plataforma).
+- Apresenta uma tabela formatada no terminal com:
+    - Nome do produto
+    - Plataforma
+    - Quantidade total adquirida
+    - Preço unitário
+    - Total gasto
+    - Data mais recente da compra
+
+É utilizado como ferramenta de consulta independente ou integrada no menu principal.
+"""
+
 from db import supabase
 from tabulate import tabulate
 import json
 import sys
 
+
 def carregar_sessao():
-    """Carrega o utilizador logado a partir do ficheiro sessao.json"""
+    """Carrega os dados do utilizador logado a partir do ficheiro ``sessao.json``.
+
+    Se o ficheiro não existir, o programa informa o utilizador e termina.
+
+    Returns:
+        dict: Dados da sessão, contendo pelo menos ``"id"`` e ``"nome"``.
+
+    Raises:
+        SystemExit: Se o ficheiro ``sessao.json`` não existir, indicando que
+        não há sessão ativa.
+    """
     try:
         with open("sessao.json", "r", encoding="utf-8") as f:
             return json.load(f)
@@ -12,7 +42,23 @@ def carregar_sessao():
         print("⛔ Precisas de fazer login antes de ver o histórico.")
         sys.exit()
 
+
 def ver_historico_compras():
+    """Mostra o histórico detalhado de compras do utilizador autenticado.
+
+    Funcionamento:
+        - Obtém o ID do utilizador através da sessão.
+        - Consulta a tabela ``compras`` ordenando da mais recente para a mais antiga.
+        - Agrupa compras por ``produto_id``, contando quantas unidades foram adquiridas
+          e registando a data mais recente dessa compra.
+        - Consulta as informações do produto na tabela ``produtos``.
+        - Formata e exibe uma tabela com resumo das compras.
+
+    A função imprime a tabela diretamente no terminal.
+
+    Returns:
+        None: Não devolve valores, apenas apresenta informação ao utilizador.
+    """
     user = carregar_sessao()
     user_id = user["id"]
 
@@ -66,7 +112,6 @@ def ver_historico_compras():
 
         tabela.append([nome, plataforma, f"{qtd}x", f"€{preco:.2f}", f"€{total:.2f}", data_fmt])
 
-    from tabulate import tabulate
     headers = ["Produto", "Plataforma", "Qtd", "Preço Unit.", "Total", "Data da Compra"]
     print(tabulate(tabela, headers=headers, tablefmt="fancy_grid"))
 
