@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ui &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for ui</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Módulo de interface de terminal (UI) da Loja Checkpoint.</span>
+
+<span class="sd">Este módulo centraliza elementos visuais reutilizáveis na aplicação:</span>
+<span class="sd">    - Limpeza do terminal</span>
+<span class="sd">    - Cabeçalho padrão com estado do utilizador e hora atual</span>
+<span class="sd">    - Animação de carregamento</span>
+<span class="sd">    - Rodapé padrão com tema, utilizador e assinatura</span>
+
+<span class="sd">É utilizado por vários outros módulos (menus, carrinho, produtos, etc.)</span>
+<span class="sd">para garantir uma apresentação consistente no terminal.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">colorama</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fore</span><span class="p">,</span> <span class="n">Style</span>
+
+
+<div class="viewcode-block" id="limpar_terminal">
+<a class="viewcode-back" href="../ui.html#ui.limpar_terminal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">limpar_terminal</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Limpa o terminal da consola.</span>
+
+<span class="sd">    Deteta automaticamente o sistema operativo:</span>
+<span class="sd">        - Em Windows usa o comando ``cls``.</span>
+<span class="sd">        - Em sistemas Unix-like (Linux, macOS) usa o comando ``clear``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        None: A função apenas executa o comando de sistema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;cls&quot;</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;nt&quot;</span> <span class="k">else</span> <span class="s2">&quot;clear&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="cabecalho">
+<a class="viewcode-back" href="../ui.html#ui.cabecalho">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cabecalho</span><span class="p">(</span><span class="n">secao_nome</span><span class="p">,</span> <span class="n">utilizador</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tema</span><span class="o">=</span><span class="s2">&quot;dark&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exibe o cabeçalho padrão da Loja Checkpoint.</span>
+
+<span class="sd">    O cabeçalho inclui:</span>
+<span class="sd">        - Nome da loja e nome da secção atual.</span>
+<span class="sd">        - Estado do utilizador: online (verde) ou offline (vermelho).</span>
+<span class="sd">        - Data e hora atuais.</span>
+<span class="sd">        - Separadores com linhas horizontais.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        secao_nome (str): Nome da secção a apresentar no cabeçalho</span>
+<span class="sd">            (por exemplo, ``&quot;Carrinho&quot;`` ou ``&quot;Catálogo de Produtos&quot;``).</span>
+<span class="sd">        utilizador (str | None): Nome do utilizador autenticado. Se for</span>
+<span class="sd">            ``None``, é mostrado como offline.</span>
+<span class="sd">        tema (str, optional): Nome do tema visual (apenas informativo</span>
+<span class="sd">            neste contexto). Por omissão é ``&quot;dark&quot;``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">largura</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">get_terminal_size</span><span class="p">()</span><span class="o">.</span><span class="n">columns</span>
+    <span class="n">metade</span> <span class="o">=</span> <span class="n">largura</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">cor_estado</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span> <span class="k">if</span> <span class="n">utilizador</span> <span class="k">else</span> <span class="n">Fore</span><span class="o">.</span><span class="n">RED</span>
+    <span class="n">estado</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cor_estado</span><span class="si">}{</span><span class="s1">&#39;🟢 Online como &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">utilizador</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">utilizador</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;🔴 Offline&#39;</span><span class="si">}{</span><span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">hora</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;🕒 </span><span class="si">%d</span><span class="s2">/%m/%Y %H:%M&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">Fore</span><span class="o">.</span><span class="n">LIGHTBLACK_EX</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="n">largura</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;🛍️  LOJA CHECKPOINT — </span><span class="si">{</span><span class="n">secao_nome</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">center</span><span class="p">(</span><span class="n">largura</span><span class="p">)</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">Fore</span><span class="o">.</span><span class="n">LIGHTBLACK_EX</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="n">largura</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">estado</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">metade</span><span class="p">)</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Fore</span><span class="o">.</span><span class="n">LIGHTWHITE_EX</span><span class="si">}{</span><span class="n">hora</span><span class="si">}{</span><span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">metade</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">Fore</span><span class="o">.</span><span class="n">LIGHTBLACK_EX</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="n">largura</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="animar_carregamento">
+<a class="viewcode-back" href="../ui.html#ui.animar_carregamento">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">animar_carregamento</span><span class="p">(</span><span class="n">mensagem</span><span class="o">=</span><span class="s2">&quot;A carregar...&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mostra uma animação curta de carregamento no terminal.</span>
+
+<span class="sd">    A animação é composta por uma sequência de símbolos em movimento,</span>
+<span class="sd">    apresentada na mesma linha, acompanhada pela mensagem fornecida.</span>
+
+<span class="sd">    Duração aproximada: ~2 segundos.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mensagem (str, optional): Texto a mostrar ao lado da animação.</span>
+<span class="sd">            Por omissão é ``&quot;A carregar...&quot;``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        None: A função apenas escreve no ``stdout`` e faz pequenas pausas.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">simbolos</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;⠋&quot;</span><span class="p">,</span> <span class="s2">&quot;⠙&quot;</span><span class="p">,</span> <span class="s2">&quot;⠹&quot;</span><span class="p">,</span> <span class="s2">&quot;⠸&quot;</span><span class="p">,</span> <span class="s2">&quot;⠼&quot;</span><span class="p">,</span> <span class="s2">&quot;⠴&quot;</span><span class="p">,</span> <span class="s2">&quot;⠦&quot;</span><span class="p">,</span> <span class="s2">&quot;⠧&quot;</span><span class="p">,</span> <span class="s2">&quot;⠇&quot;</span><span class="p">,</span> <span class="s2">&quot;⠏&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>  <span class="c1"># Dura cerca de 2 segundos</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">simbolos</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\r</span><span class="si">{</span><span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">mensagem</span><span class="si">}{</span><span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2">✅ Concluído!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="rodape">
+<a class="viewcode-back" href="../ui.html#ui.rodape">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tema</span><span class="o">=</span><span class="s2">&quot;dark&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mostra o rodapé padrão da aplicação.</span>
+
+<span class="sd">    O rodapé inclui:</span>
+<span class="sd">        - Nome do tema atual.</span>
+<span class="sd">        - Nome (ou ausência) do utilizador autenticado.</span>
+<span class="sd">        - Assinatura com o nome da loja e ano.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        utilizador (str | None): Nome do utilizador autenticado.</span>
+<span class="sd">            Se ``None``, é indicado como &quot;não autenticado&quot;.</span>
+<span class="sd">        tema (str, optional): Nome do tema visual (informativo).</span>
+<span class="sd">            Por omissão é ``&quot;dark&quot;``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        None: Apenas escreve o rodapé no terminal.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">largura</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">get_terminal_size</span><span class="p">()</span><span class="o">.</span><span class="n">columns</span>
+    <span class="n">texto_tema</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;🎨 Tema: </span><span class="si">{</span><span class="n">tema</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">texto_user</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;👤 Utilizador: </span><span class="si">{</span><span class="n">utilizador</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">utilizador</span> <span class="k">else</span> <span class="s2">&quot;👤 Utilizador: não autenticado&quot;</span>
+    <span class="n">assinatura</span> <span class="o">=</span> <span class="s2">&quot;🏁 Loja Checkpoint 2025&quot;</span>
+    <span class="n">linha</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">LIGHTBLACK_EX</span> <span class="o">+</span> <span class="s2">&quot;═&quot;</span> <span class="o">*</span> <span class="n">largura</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span>
+    <span class="n">rodape_txt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">texto_tema</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">texto_user</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">assinatura</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">linha</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">Fore</span><span class="o">.</span><span class="n">LIGHTWHITE_EX</span> <span class="o">+</span> <span class="n">rodape_txt</span><span class="o">.</span><span class="n">center</span><span class="p">(</span><span class="n">largura</span><span class="p">)</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">linha</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../auth.html">auth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compras.html">compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../produtos.html">produtos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">ui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

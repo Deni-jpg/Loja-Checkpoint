@@ -10,7 +10,7 @@ Este módulo centraliza:
 - e logout.
 
 Requer variáveis de ambiente:
-    SUPABASE_URL, SUPABASE_KEY
+SUPABASE_URL, SUPABASE_KEY
 Carregadas via `python-dotenv` (se houver `.env`).
 """
 

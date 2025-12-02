@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>produtos_utils module &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="ui module" href="ui.html" />
+    <link rel="prev" title="produtos module" href="produtos.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-produtos_utils">
+<span id="produtos-utils-module"></span><h1>produtos_utils module<a class="headerlink" href="#module-produtos_utils" title="Link to this heading">¶</a></h1>
+<p>Módulo de consulta de produtos.</p>
+<p>Este módulo permite:
+- Listar todos os produtos da base de dados Supabase.
+- Obter informações detalhadas de um produto específico.
+- Utilizar tanto em modo visual (terminal) como em modo de dados</p>
+<blockquote>
+<div><p>para integração com outras funcionalidades.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Funções principais:</dt><dd><ul class="simple">
+<li><p>listar_produtos()</p></li>
+<li><p>obter_produto_por_id()</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos_utils.listar_produtos">
+<span class="sig-prename descclassname"><span class="pre">produtos_utils.</span></span><span class="sig-name descname"><span class="pre">listar_produtos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'visual'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">utilizador</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos_utils.html#listar_produtos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos_utils.listar_produtos" title="Link to this definition">¶</a></dt>
+<dd><p>Lista produtos registados na base de dados.</p>
+<dl class="simple">
+<dt>Modos de operação:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">visual</span></code>: mostra uma tabela formatada no terminal.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dados</span></code>: retorna a lista de produtos como dicionários
+sem qualquer output visual.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>modo</strong> (<em>str</em><em>, </em><em>optional</em>) – Define o modo de apresentação.
+Pode ser <code class="docutils literal notranslate"><span class="pre">&quot;visual&quot;</span></code> ou <code class="docutils literal notranslate"><span class="pre">&quot;dados&quot;</span></code>.
+Por omissão é <code class="docutils literal notranslate"><span class="pre">&quot;visual&quot;</span></code>.</p></li>
+<li><p><strong>utilizador</strong> (<em>str</em><em> | </em><em>None</em>) – Nome do utilizador logado,
+utilizado apenas para exibição na interface.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>Se <code class="docutils literal notranslate"><span class="pre">modo=&quot;dados&quot;</span></code>, retorna uma lista de produtos no formato:
+<code class="docutils literal notranslate"><span class="pre">{&quot;id&quot;,</span> <span class="pre">&quot;nome&quot;,</span> <span class="pre">&quot;preco&quot;,</span> <span class="pre">&quot;plataforma&quot;,</span> <span class="pre">&quot;stock&quot;,</span> <span class="pre">...}</span></code></p></li>
+<li><p>Caso contrário, não retorna valor e exibe o conteúdo no terminal.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[dict] | None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Nota:</dt><dd><p>Esta função depende da base de dados Supabase para obter os produtos.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos_utils.obter_produto_por_id">
+<span class="sig-prename descclassname"><span class="pre">produtos_utils.</span></span><span class="sig-name descname"><span class="pre">obter_produto_por_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">produto_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dados'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">utilizador</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos_utils.html#obter_produto_por_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos_utils.obter_produto_por_id" title="Link to this definition">¶</a></dt>
+<dd><p>Obtém um produto específico pelo ID.</p>
+<dl class="simple">
+<dt>Modos de operação:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">dados</span></code>: retorna o produto como dicionário</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">visual</span></code>: apresenta detalhes formatados no terminal</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>produto_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do produto a consultar.</p></li>
+<li><p><strong>modo</strong> (<em>str</em><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">&quot;dados&quot;</span></code> ou <code class="docutils literal notranslate"><span class="pre">&quot;visual&quot;</span></code>.</p></li>
+<li><p><strong>utilizador</strong> (<em>str</em><em> | </em><em>None</em>) – Nome do utilizador logado
+para exibição na interface.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>Dicionário com os dados do produto se encontrado</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code> caso o produto não exista</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict | None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Informações apresentadas:</dt><dd><ul class="simple">
+<li><p>Nome</p></li>
+<li><p>Plataforma</p></li>
+<li><p>Preço</p></li>
+<li><p>Stock</p></li>
+<li><p>Descrição</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="auth.html">auth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compras.html">compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos.html">produtos module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">produtos_utils module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#produtos_utils.listar_produtos"><code class="docutils literal notranslate"><span class="pre">listar_produtos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos_utils.obter_produto_por_id"><code class="docutils literal notranslate"><span class="pre">obter_produto_por_id()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">ui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="produtos.html" title="previous chapter">produtos module</a></li>
+      <li>Next: <a href="ui.html" title="next chapter">ui module</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/produtos_utils.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

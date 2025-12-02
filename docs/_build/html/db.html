@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>db module &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="historico_compras module" href="historico_compras.html" />
+    <link rel="prev" title="compras module" href="compras.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-db">
+<span id="db-module"></span><h1>db module<a class="headerlink" href="#module-db" title="Link to this heading">¶</a></h1>
+<p>Módulo de ligação à base de dados Supabase.</p>
+<p>Este módulo:
+- Carrega variáveis de ambiente definidas no ficheiro <code class="docutils literal notranslate"><span class="pre">.env</span></code>.
+- Valida a existência das credenciais necessárias.
+- Cria e expõe um cliente Supabase para uso em todo o projeto.</p>
+<p>A conexão é estabelecida através do SDK oficial do Supabase
+(<code class="docutils literal notranslate"><span class="pre">supabase-py</span></code>), permitindo operações como:
+seleções, inserções, atualizações e eliminações nas tabelas remotas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">raises Exception<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Se as variáveis de ambiente <code class="docutils literal notranslate"><span class="pre">SUPABASE_URL</span></code> ou</p>
+</dd>
+<dt class="field-even">raises <cite>SUPABASE_KEY`</cite> não estiverem definidas, impedindo a ligaçã<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">raises à base de dados.<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<dl class="py data">
+<dt class="sig sig-object py" id="db.key">
+<span class="sig-prename descclassname"><span class="pre">db.</span></span><span class="sig-name descname"><span class="pre">key</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15emd1a3lpYmN3ZXZsbmF5eG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5MTQwMDAsImV4cCI6MjA3NTQ5MDAwMH0.QqTGPMdThsP-skC6elLHSoI4bOGZgWDxp8L5rbEcwRI'</span></span><a class="headerlink" href="#db.key" title="Link to this definition">¶</a></dt>
+<dd><p>Chave de API do Supabase carregada do <code class="docutils literal notranslate"><span class="pre">.env</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="db.supabase">
+<span class="sig-prename descclassname"><span class="pre">db.</span></span><span class="sig-name descname"><span class="pre">supabase</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Client</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;supabase._sync.client.Client</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#db.supabase" title="Link to this definition">¶</a></dt>
+<dd><p>Instância global do cliente Supabase utilizada pelo restante projeto.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="db.url">
+<span class="sig-prename descclassname"><span class="pre">db.</span></span><span class="sig-name descname"><span class="pre">url</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://myzgukyibcwevlnayxnm.supabase.co'</span></span><a class="headerlink" href="#db.url" title="Link to this definition">¶</a></dt>
+<dd><p>URL do projeto Supabase carregada do <code class="docutils literal notranslate"><span class="pre">.env</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="auth.html">auth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compras.html">compras module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">db module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#db.key"><code class="docutils literal notranslate"><span class="pre">key</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#db.supabase"><code class="docutils literal notranslate"><span class="pre">supabase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#db.url"><code class="docutils literal notranslate"><span class="pre">url</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos.html">produtos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">ui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="compras.html" title="previous chapter">compras module</a></li>
+      <li>Next: <a href="historico_compras.html" title="next chapter">historico_compras module</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/db.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

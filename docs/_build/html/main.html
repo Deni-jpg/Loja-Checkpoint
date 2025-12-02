@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>main module &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="notificacao_email module" href="notificacao_email.html" />
+    <link rel="prev" title="historico_compras module" href="historico_compras.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-main">
+<span id="main-module"></span><h1>main module<a class="headerlink" href="#module-main" title="Link to this heading">¶</a></h1>
+<p>Aplicação principal (menu global em terminal) da Loja Checkpoint.</p>
+<p>Funções:
+- Renderização de cabeçalho/rodapé e menu tabulado no terminal.
+- Gestão de sessão (guardar/carregar/limpar).
+- Invocação de scripts auxiliares (produtos, compras, comentários, avaliações, etc.).
+- Login/Registo/Recuperação de senha via módulos de autenticação/Supabase.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="main.cabecalho">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">cabecalho</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nome</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dark'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/main.html#cabecalho"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.cabecalho" title="Link to this definition">¶</a></dt>
+<dd><p>Renderiza cabeçalho responsivo com estado (online/offline) e data/hora.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nome</strong> (<em>str</em><em> | </em><em>None</em>) – Nome do utilizador (None = offline).</p></li>
+<li><p><strong>tema</strong> (<em>str</em>) – ‘dark’ ou ‘light’.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Imprime linhas e texto colorido no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.carregar_sessao">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">carregar_sessao</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/main.html#carregar_sessao"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.carregar_sessao" title="Link to this definition">¶</a></dt>
+<dd><p>Lê a sessão do disco.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sessão guardada ou <cite>None</cite> se o ficheiro não existir/invalidar.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.color">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">color</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_code</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/main.html#color"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.color" title="Link to this definition">¶</a></dt>
+<dd><p>Envolve um texto com códigos de cor do <cite>colorama</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>str</em>) – Texto alvo.</p></li>
+<li><p><strong>color_code</strong> – Código de cor (ex.: Fore.CYAN).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Texto colorido pronto para impressão.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.guardar_sessao">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">guardar_sessao</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/main.html#guardar_sessao"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.guardar_sessao" title="Link to this definition">¶</a></dt>
+<dd><p>Persiste informações mínimas da sessão no disco.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>user_dict</strong> (<em>dict</em>) – Deve conter pelo menos <cite>id</cite>, <cite>nome</cite>, <cite>tipo</cite>, <cite>email</cite>.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Escreve <cite>sessao.json</cite> em <cite>SESSAO_PATH</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.limpar_sessao">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">limpar_sessao</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/main.html#limpar_sessao"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.limpar_sessao" title="Link to this definition">¶</a></dt>
+<dd><p>Remove o ficheiro de sessão, se existir.</p>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Apaga <cite>sessao.json</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.load_config">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">load_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/main.html#load_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.load_config" title="Link to this definition">¶</a></dt>
+<dd><p>Carrega o ficheiro de configuração JSON.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Configuração atual. Se não existir/invalidar, cria e devolve <cite>{“theme”: “dark”}</cite>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.main_menu">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">main_menu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/main.html#main_menu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.main_menu" title="Link to this definition">¶</a></dt>
+<dd><p>Loop principal do menu global da aplicação.</p>
+<dl class="simple">
+<dt>Opções:</dt><dd><ul class="simple">
+<li><ol class="arabic simple">
+<li><p>Login / Recuperação</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="2">
+<li><p>Registo</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="3">
+<li><p>Produtos</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="4">
+<li><p>Compras</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="5">
+<li><p>Comentários</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="7">
+<li><p>Avaliações</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="8">
+<li><p>Comparar Jogos</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="9">
+<li><p>Wishlist</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="6">
+<li><p>Configurações (tema)</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="0">
+<li><p>Sair</p></li>
+</ol>
+</li>
+</ul>
+</dd>
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>I/O no terminal, invoca subprocessos para módulos auxiliares.</p></li>
+<li><p>Lê/escreve sessão e config.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.recuperar_password">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">recuperar_password</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/main.html#recuperar_password"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.recuperar_password" title="Link to this definition">¶</a></dt>
+<dd><p>(Cópia local) Envia email de recuperação usando a instância global do Supabase.</p>
+<dl class="simple">
+<dt>⚠️ Atenção:</dt><dd><p>Existe também <cite>auth.recuperar_password</cite> importada no topo.
+Esta função <strong>sombra</strong> a importada dentro deste módulo.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>email</strong> (<em>str</em>) – Email de conta.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Chama <cite>supabase.auth.reset_password_email(email)</cite>.</p></li>
+<li><p>Imprime mensagens no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.rodape">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">rodape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nome</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dark'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/main.html#rodape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.rodape" title="Link to this definition">¶</a></dt>
+<dd><p>Renderiza rodapé com tema e assinatura.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nome</strong> (<em>str</em><em> | </em><em>None</em>) – Nome do utilizador atual.</p></li>
+<li><p><strong>tema</strong> (<em>str</em>) – Tema ativo.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Imprime linhas e texto no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.run_script">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">run_script</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/main.html#run_script"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.run_script" title="Link to this definition">¶</a></dt>
+<dd><p>Executa, como subprocesso, um módulo Python da pasta base (terminal).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<em>str</em>) – Nome do ficheiro (ex.: “produtos.py”).</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Lança <cite>python &lt;filename&gt;</cite> com <cite>subprocess.run</cite>.</p></li>
+<li><p>Imprime estado no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.save_config">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">save_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/main.html#save_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.save_config" title="Link to this definition">¶</a></dt>
+<dd><p>Guarda a configuração no ficheiro <cite>config.json</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>dict</em>) – Dicionário de configuração.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Escreve JSON em <cite>CONFIG_PATH</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="auth.html">auth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compras.html">compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">main module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#main.cabecalho"><code class="docutils literal notranslate"><span class="pre">cabecalho()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#main.carregar_sessao"><code class="docutils literal notranslate"><span class="pre">carregar_sessao()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#main.color"><code class="docutils literal notranslate"><span class="pre">color()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#main.guardar_sessao"><code class="docutils literal notranslate"><span class="pre">guardar_sessao()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#main.limpar_sessao"><code class="docutils literal notranslate"><span class="pre">limpar_sessao()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#main.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#main.main_menu"><code class="docutils literal notranslate"><span class="pre">main_menu()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#main.recuperar_password"><code class="docutils literal notranslate"><span class="pre">recuperar_password()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#main.rodape"><code class="docutils literal notranslate"><span class="pre">rodape()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#main.run_script"><code class="docutils literal notranslate"><span class="pre">run_script()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#main.save_config"><code class="docutils literal notranslate"><span class="pre">save_config()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos.html">produtos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">ui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="historico_compras.html" title="previous chapter">historico_compras module</a></li>
+      <li>Next: <a href="notificacao_email.html" title="next chapter">notificacao_email module</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/main.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

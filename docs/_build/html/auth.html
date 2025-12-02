@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>auth module &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="avaliacoes module" href="avaliacoes.html" />
+    <link rel="prev" title="Loja-Checkpoint documentation" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-auth">
+<span id="auth-module"></span><h1>auth module<a class="headerlink" href="#module-auth" title="Link to this heading">¶</a></h1>
+<p>Autenticação e gestão básica de perfil via Supabase.</p>
+<p>Este módulo centraliza:
+- criação de cliente Supabase,
+- registo de utilizadores,
+- login (utilizador/admin),
+- recuperação de palavra-passe,
+- atualização de perfil,
+- e logout.</p>
+<p>Requer variáveis de ambiente:
+SUPABASE_URL, SUPABASE_KEY
+Carregadas via <cite>python-dotenv</cite> (se houver <cite>.env</cite>).</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="auth.atualizar_perfil">
+<span class="sig-prename descclassname"><span class="pre">auth.</span></span><span class="sig-name descname"><span class="pre">atualizar_perfil</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nome</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tipo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/auth.html#atualizar_perfil"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#auth.atualizar_perfil" title="Link to this definition">¶</a></dt>
+<dd><p>Atualiza campos opcionais do perfil de um utilizador.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_id</strong> (<em>str</em>) – ID do utilizador no Supabase.</p></li>
+<li><p><strong>nome</strong> (<em>str</em><em>, </em><em>optional</em>) – Novo nome a guardar.</p></li>
+<li><p><strong>tipo</strong> (<em>str</em><em>, </em><em>optional</em>) – Novo tipo (ex.: ‘cliente’, ‘admin’).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Atualiza a tabela <cite>perfil</cite> com <cite>update(…)</cite>.</p></li>
+<li><p>Imprime mensagens de sucesso/erro no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auth.login_admin">
+<span class="sig-prename descclassname"><span class="pre">auth.</span></span><span class="sig-name descname"><span class="pre">login_admin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/auth.html#login_admin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#auth.login_admin" title="Link to this definition">¶</a></dt>
+<dd><p>Realiza login de um administrador com email e palavra-passe.</p>
+<p>Nota: a validação de que o utilizador é realmente admin deve ocorrer via
+tabela <cite>perfil</cite> (campo <cite>tipo</cite>), fora desta função.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>email</strong> (<em>str</em>) – Email.</p></li>
+<li><p><strong>password</strong> (<em>str</em>) – Palavra-passe.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Objeto <cite>user</cite> da sessão em caso de sucesso; <cite>None</cite> se falhar.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any | None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Chama <cite>auth.sign_in_with_password</cite>.</p></li>
+<li><p>Imprime mensagens de sucesso/erro ou conta não verificada.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auth.login_utilizador">
+<span class="sig-prename descclassname"><span class="pre">auth.</span></span><span class="sig-name descname"><span class="pre">login_utilizador</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/auth.html#login_utilizador"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#auth.login_utilizador" title="Link to this definition">¶</a></dt>
+<dd><p>Realiza login de um utilizador com email e palavra-passe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>email</strong> (<em>str</em>) – Email de login.</p></li>
+<li><p><strong>password</strong> (<em>str</em>) – Palavra-passe.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Objeto <cite>user</cite> da sessão em caso de sucesso; <cite>None</cite> se falhar.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any | None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Chama <cite>auth.sign_in_with_password</cite>.</p></li>
+<li><p>Imprime mensagens de sucesso/erro ou conta não verificada.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auth.logout_utilizador">
+<span class="sig-prename descclassname"><span class="pre">auth.</span></span><span class="sig-name descname"><span class="pre">logout_utilizador</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/auth.html#logout_utilizador"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#auth.logout_utilizador" title="Link to this definition">¶</a></dt>
+<dd><p>Encerra a sessão de autenticação atual.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Chama <cite>auth.sign_out</cite>.</p></li>
+<li><p>Imprime confirmação no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auth.recuperar_password">
+<span class="sig-prename descclassname"><span class="pre">auth.</span></span><span class="sig-name descname"><span class="pre">recuperar_password</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/auth.html#recuperar_password"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#auth.recuperar_password" title="Link to this definition">¶</a></dt>
+<dd><p>Envia email de recuperação de palavra-passe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>email</strong> (<em>str</em>) – Email do utilizador.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Chama <cite>auth.reset_password_email</cite>.</p></li>
+<li><p>Imprime mensagens de sucesso/erro no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auth.registar_utilizador">
+<span class="sig-prename descclassname"><span class="pre">auth.</span></span><span class="sig-name descname"><span class="pre">registar_utilizador</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nome</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tipo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/auth.html#registar_utilizador"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#auth.registar_utilizador" title="Link to this definition">¶</a></dt>
+<dd><p>Regista um novo utilizador no Supabase e cria o registo correspondente em <cite>perfil</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>email</strong> (<em>str</em>) – Email do utilizador.</p></li>
+<li><p><strong>password</strong> (<em>str</em>) – Palavra-passe.</p></li>
+<li><p><strong>nome</strong> (<em>str</em>) – Nome a ser guardado no perfil.</p></li>
+<li><p><strong>tipo</strong> (<em>str</em>) – Tipo de utilizador (ex.: ‘cliente’, ‘admin’).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Objeto <cite>user</cite> devolvido pelo Supabase em caso de sucesso; <cite>None</cite> se falhar.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any | None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Chama <cite>auth.sign_up</cite>.</p></li>
+<li><p>Insere registo na tabela <cite>perfil</cite> (campos: <cite>user_id</cite>, <cite>nome</cite>, <cite>tipo</cite>, <cite>email</cite>).</p></li>
+<li><p>Imprime mensagens no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">auth module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#auth.atualizar_perfil"><code class="docutils literal notranslate"><span class="pre">atualizar_perfil()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#auth.login_admin"><code class="docutils literal notranslate"><span class="pre">login_admin()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#auth.login_utilizador"><code class="docutils literal notranslate"><span class="pre">login_utilizador()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#auth.logout_utilizador"><code class="docutils literal notranslate"><span class="pre">logout_utilizador()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#auth.recuperar_password"><code class="docutils literal notranslate"><span class="pre">recuperar_password()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#auth.registar_utilizador"><code class="docutils literal notranslate"><span class="pre">registar_utilizador()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compras.html">compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos.html">produtos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">ui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Loja-Checkpoint documentation</a></li>
+      <li>Next: <a href="avaliacoes.html" title="next chapter">avaliacoes module</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/auth.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

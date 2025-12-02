@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>produtos module &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="produtos_utils module" href="produtos_utils.html" />
+    <link rel="prev" title="notificacao_email module" href="notificacao_email.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-produtos">
+<span id="produtos-module"></span><h1>produtos module<a class="headerlink" href="#module-produtos" title="Link to this heading">¶</a></h1>
+<p>Gestão de produtos (terminal) para a Loja Checkpoint.</p>
+<p>Este módulo oferece operações de administração e consulta de produtos
+integradas ao terminal, usando Supabase como fonte de dados.</p>
+<p>Funcionalidades principais:
+- Admin:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Adicionar, atualizar e remover produtos.</p></li>
+<li><p>Listar produtos com stock baixo.</p></li>
+<li><p>Listar Top 3 produtos mais vendidos.</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Cliente:
+- Visualizar catálogo (delegado a <cite>produtos_utils.listar_produtos</cite>).</p></li>
+<li><p>Sessão:
+- Requer sessão válida em <cite>sessao.json</cite> com chaves mínimas: <cite>id</cite>, <cite>nome</cite>, <cite>tipo</cite>.</p></li>
+</ul>
+<p>Tabelas utilizadas (ver <cite>db.sql</cite>):
+- public.produtos (id, nome, plataforma, preco, stock, vendas, descricao)</p>
+<p>Dependências:
+- Supabase (cliente em <cite>db.supabase</cite>)
+- Utilitários de UI (<cite>ui.cabecalho</cite>, <cite>ui.rodape</cite>, <cite>ui.limpar_terminal</cite>, <cite>ui.animar_carregamento</cite>)
+- <cite>colorama</cite> e <cite>tabulate</cite> para experiência visual no terminal</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.adicionar_produto">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">adicionar_produto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nome_utilizador</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#adicionar_produto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.adicionar_produto" title="Link to this definition">¶</a></dt>
+<dd><p>Fluxo interativo para adicionar um novo produto.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nome_utilizador</strong> (<em>str</em>) – Nome do utilizador (para UI no cabeçalho/rodapé).</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Lê inputs do terminal.</p></li>
+<li><p>Valida dados localmente.</p></li>
+<li><p>Insere na tabela <cite>produtos</cite> via Supabase.</p></li>
+<li><p>Imprime mensagens de sucesso/erro.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.atualizar_produto">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">atualizar_produto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nome_utilizador</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#atualizar_produto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.atualizar_produto" title="Link to this definition">¶</a></dt>
+<dd><p>Fluxo interativo para atualizar um produto existente.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nome_utilizador</strong> (<em>str</em>) – Nome do utilizador para UI.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Lista produtos (modo visual) para auxiliar seleção.</p></li>
+<li><p>Lê campos atualizados do terminal e executa <cite>UPDATE</cite> em <cite>produtos</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.carregar_sessao">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">carregar_sessao</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#carregar_sessao"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.carregar_sessao" title="Link to this definition">¶</a></dt>
+<dd><p>Carrega a sessão do utilizador a partir de <cite>sessao.json</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dicionário com <cite>id</cite>, <cite>nome</cite>, <cite>tipo</cite> se existir; <cite>None</cite> caso contrário.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.confirmar">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">confirmar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Confirmar?</span> <span class="pre">(s/n):</span> <span class="pre">'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#confirmar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.confirmar" title="Link to this definition">¶</a></dt>
+<dd><p>Obtém confirmação simples do utilizador (apenas ‘s’ confirma).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prompt</strong> (<em>str</em>) – Prompt a apresentar.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><cite>True</cite> se o utilizador confirmou com ‘s’; caso contrário, <cite>False</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.ler_id_inteiro">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">ler_id_inteiro</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#ler_id_inteiro"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.ler_id_inteiro" title="Link to this definition">¶</a></dt>
+<dd><p>Lê um ID inteiro válido (com validação).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prompt</strong> (<em>str</em>) – Prompt para input.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ID inteiro.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.ler_preco_positivo">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">ler_preco_positivo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#ler_preco_positivo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.ler_preco_positivo" title="Link to this definition">¶</a></dt>
+<dd><p>Lê um preço &gt; 0 (aceita vírgula), com validação.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prompt</strong> (<em>str</em>) – Prompt para input.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Valor numérico &gt; 0.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.ler_stock_nao_negativo">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">ler_stock_nao_negativo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#ler_stock_nao_negativo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.ler_stock_nao_negativo" title="Link to this definition">¶</a></dt>
+<dd><p>Lê um stock inteiro &gt;= 0 (com validação).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prompt</strong> (<em>str</em>) – Prompt para input.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Valor inteiro &gt;= 0.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.ler_texto_obrigatorio">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">ler_texto_obrigatorio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#ler_texto_obrigatorio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.ler_texto_obrigatorio" title="Link to this definition">¶</a></dt>
+<dd><p>Lê um texto não vazio do terminal (repete até ser válido).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prompt</strong> (<em>str</em>) – Prompt para input.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Texto preenchido.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.listar_produtos_com_stock_baixo">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">listar_produtos_com_stock_baixo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nome_utilizador</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#listar_produtos_com_stock_baixo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.listar_produtos_com_stock_baixo" title="Link to this definition">¶</a></dt>
+<dd><p>Lista os produtos com stock abaixo de um limiar (default: &lt; 3).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nome_utilizador</strong> (<em>str</em>) – Nome para UI.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Consulta <cite>produtos</cite> com <cite>stock &lt; 3</cite>.</p></li>
+<li><p>Imprime tabela (‘Produto’ x ‘Stock’) no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.listar_produtos_mais_vendidos">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">listar_produtos_mais_vendidos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nome_utilizador</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#listar_produtos_mais_vendidos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.listar_produtos_mais_vendidos" title="Link to this definition">¶</a></dt>
+<dd><p>Mostra os 3 produtos com maior valor no campo <cite>vendas</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nome_utilizador</strong> (<em>str</em>) – Nome para UI.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Consulta <cite>produtos</cite> ordenando <cite>vendas</cite> desc e limitando em 3.</p></li>
+<li><p>Imprime ranking no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.menu_produtos">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">menu_produtos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#menu_produtos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.menu_produtos" title="Link to this definition">¶</a></dt>
+<dd><p>Loop de menu de produtos (terminal).</p>
+<dl class="simple">
+<dt>Requisitos:</dt><dd><ul class="simple">
+<li><p>Sessão válida (ficheiro <cite>sessao.json</cite> com <cite>id</cite>, <cite>nome</cite>, <cite>tipo</cite>).</p></li>
+</ul>
+</dd>
+<dt>Comportamento:</dt><dd><ul class="simple">
+<li><p>Se <cite>tipo == ‘admin’</cite>: exibe opções de gestão (CRUD, stock baixo, top vendidos).</p></li>
+<li><p>Se <cite>tipo != ‘admin’</cite>: exibe menu para cliente (listar catálogo e top vendidos).</p></li>
+</ul>
+</dd>
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>I/O no terminal, leituras/escritas em Supabase conforme opções.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.notificar">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">notificar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tipo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'info'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#notificar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.notificar" title="Link to this definition">¶</a></dt>
+<dd><p>Mostra uma notificação colorida no terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>msg</strong> (<em>str</em>) – Mensagem a apresentar.</p></li>
+<li><p><strong>tipo</strong> (<em>str</em>) – Um de {‘info’, ‘sucesso’, ‘erro’, ‘alerta’}.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Imprime no terminal com estilos <cite>colorama</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.obter_produto_por_id">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">obter_produto_por_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">produto_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#obter_produto_por_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.obter_produto_por_id" title="Link to this definition">¶</a></dt>
+<dd><p>Devolve um produto (dict) pelo seu ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>produto_id</strong> (<em>int</em>) – Identificador do produto.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Registo do produto ou <cite>None</cite> se não encontrado.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict | None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Em caso de erro na consulta, imprime notificação de erro.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.remover_produto">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">remover_produto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nome_utilizador</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#remover_produto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.remover_produto" title="Link to this definition">¶</a></dt>
+<dd><p>Fluxo interativo para remover um produto existente.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nome_utilizador</strong> (<em>str</em>) – Nome do utilizador (UI).</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Confirma existência do ID.</p></li>
+<li><p>Solicita confirmação do utilizador.</p></li>
+<li><p>Executa <cite>DELETE</cite> em <cite>produtos</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="produtos.validar_produto">
+<span class="sig-prename descclassname"><span class="pre">produtos.</span></span><span class="sig-name descname"><span class="pre">validar_produto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dados</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/produtos.html#validar_produto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#produtos.validar_produto" title="Link to this definition">¶</a></dt>
+<dd><p>Validação defensiva antes de escrever na BD.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dados</strong> (<em>dict</em>) – Campos do produto:
+- nome (str, obrigatório)
+- plataforma (str, obrigatório)
+- preco (float, &gt; 0)
+- stock (int, &gt;= 0)
+- descricao (str, opcional, &lt;= 1000 chars)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><cite>(ok, erros)</cite> onde <cite>ok</cite> indica se passou na validação,
+e <cite>erros</cite> contém as mensagens de erro encontradas.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[bool, list[str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="auth.html">auth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compras.html">compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">produtos module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.adicionar_produto"><code class="docutils literal notranslate"><span class="pre">adicionar_produto()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.atualizar_produto"><code class="docutils literal notranslate"><span class="pre">atualizar_produto()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.carregar_sessao"><code class="docutils literal notranslate"><span class="pre">carregar_sessao()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.confirmar"><code class="docutils literal notranslate"><span class="pre">confirmar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.ler_id_inteiro"><code class="docutils literal notranslate"><span class="pre">ler_id_inteiro()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.ler_preco_positivo"><code class="docutils literal notranslate"><span class="pre">ler_preco_positivo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.ler_stock_nao_negativo"><code class="docutils literal notranslate"><span class="pre">ler_stock_nao_negativo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.ler_texto_obrigatorio"><code class="docutils literal notranslate"><span class="pre">ler_texto_obrigatorio()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.listar_produtos_com_stock_baixo"><code class="docutils literal notranslate"><span class="pre">listar_produtos_com_stock_baixo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.listar_produtos_mais_vendidos"><code class="docutils literal notranslate"><span class="pre">listar_produtos_mais_vendidos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.menu_produtos"><code class="docutils literal notranslate"><span class="pre">menu_produtos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.notificar"><code class="docutils literal notranslate"><span class="pre">notificar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.obter_produto_por_id"><code class="docutils literal notranslate"><span class="pre">obter_produto_por_id()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.remover_produto"><code class="docutils literal notranslate"><span class="pre">remover_produto()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#produtos.validar_produto"><code class="docutils literal notranslate"><span class="pre">validar_produto()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">ui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="notificacao_email.html" title="previous chapter">notificacao_email module</a></li>
+      <li>Next: <a href="produtos_utils.html" title="next chapter">produtos_utils module</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/produtos.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

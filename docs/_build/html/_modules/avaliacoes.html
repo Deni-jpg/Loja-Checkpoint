@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>avaliacoes &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for avaliacoes</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Módulo de avaliações de produtos (terminal).</span>
+
+<span class="sd">Funcionalidades:</span>
+<span class="sd">- Cliente avalia um produto comprado (1 a 5 estrelas + comentário opcional).</span>
+<span class="sd">- Visualização de médias por produto com representação em estrelas.</span>
+<span class="sd">- Menu de avaliações (cliente e admin) integrando com UI em terminal.</span>
+
+<span class="sd">Dependências:</span>
+<span class="sd">- Supabase (tabelas: `produtos`, `compras`, `avaliacoes`)</span>
+<span class="sd">- Utilitários de UI (cabecalho, rodape, limpar_terminal, animar_carregamento)</span>
+<span class="sd">- `colorama` e `tabulate` para visualização amigável.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">db</span><span class="w"> </span><span class="kn">import</span> <span class="n">supabase</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ui</span><span class="w"> </span><span class="kn">import</span> <span class="n">cabecalho</span><span class="p">,</span> <span class="n">rodape</span><span class="p">,</span> <span class="n">limpar_terminal</span><span class="p">,</span> <span class="n">animar_carregamento</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">colorama</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fore</span><span class="p">,</span> <span class="n">Style</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tabulate</span><span class="w"> </span><span class="kn">import</span> <span class="n">tabulate</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">SESSAO_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;sessao.json&quot;</span>
+
+
+<span class="c1"># === FUNÇÕES DE SESSÃO ===</span>
+<div class="viewcode-block" id="carregar_sessao">
+<a class="viewcode-back" href="../avaliacoes.html#avaliacoes.carregar_sessao">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">carregar_sessao</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Carrega a sessão do utilizador a partir do ficheiro local `sessao.json`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict | None: Dicionário com chaves esperadas (`id`, `nome`, `tipo`) ou `None`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">SESSAO_PATH</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<span class="c1"># === NOTIFICAÇÕES COLORIDAS ===</span>
+<div class="viewcode-block" id="notificar">
+<a class="viewcode-back" href="../avaliacoes.html#avaliacoes.notificar">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">notificar</span><span class="p">(</span><span class="n">mensagem</span><span class="p">,</span> <span class="n">tipo</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apresenta uma notificação colorida no terminal.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mensagem (str): Texto a mostrar.</span>
+<span class="sd">        tipo (str): &#39;info&#39;, &#39;sucesso&#39;, &#39;erro&#39; ou &#39;alerta&#39;.</span>
+
+<span class="sd">    Side Effects:</span>
+<span class="sd">        - Imprime no terminal usando `colorama`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cores</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;info&quot;</span><span class="p">:</span> <span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span><span class="p">,</span>
+        <span class="s2">&quot;sucesso&quot;</span><span class="p">:</span> <span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span><span class="p">,</span>
+        <span class="s2">&quot;erro&quot;</span><span class="p">:</span> <span class="n">Fore</span><span class="o">.</span><span class="n">RED</span><span class="p">,</span>
+        <span class="s2">&quot;alerta&quot;</span><span class="p">:</span> <span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span>
+    <span class="p">}</span>
+    <span class="n">cor</span> <span class="o">=</span> <span class="n">cores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tipo</span><span class="p">,</span> <span class="n">Fore</span><span class="o">.</span><span class="n">WHITE</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cor</span><span class="si">}</span><span class="s2">🔔 </span><span class="si">{</span><span class="n">mensagem</span><span class="si">}{</span><span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># === FUNÇÃO DE RENDERIZAÇÃO DE ESTRELAS ===</span>
+<div class="viewcode-block" id="render_stars">
+<a class="viewcode-back" href="../avaliacoes.html#avaliacoes.render_stars">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_stars</span><span class="p">(</span><span class="n">media</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converte um valor float (1.0–5.0) numa barra de estrelas legível.</span>
+
+<span class="sd">    Exemplo:</span>
+<span class="sd">        4.5 -&gt; &quot;⭐⭐⭐⭐✩&quot; (✩ como meia estrela)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        media (float): Média calculada do produto (0–5).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: String com estrelas cheias e vazias.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cheias</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">media</span><span class="p">)</span>
+    <span class="n">meia</span> <span class="o">=</span> <span class="p">(</span><span class="n">media</span> <span class="o">-</span> <span class="n">cheias</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.5</span>
+    <span class="n">estrelas</span> <span class="o">=</span> <span class="s2">&quot;⭐&quot;</span> <span class="o">*</span> <span class="n">cheias</span>
+    <span class="k">if</span> <span class="n">meia</span> <span class="ow">and</span> <span class="n">cheias</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="n">estrelas</span> <span class="o">+=</span> <span class="s2">&quot;✩&quot;</span>
+    <span class="n">estrelas</span> <span class="o">+=</span> <span class="s2">&quot;☆&quot;</span> <span class="o">*</span> <span class="p">(</span><span class="mi">5</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">estrelas</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">estrelas</span></div>
+
+
+
+<span class="c1"># === AVALIAR PRODUTO ===</span>
+<div class="viewcode-block" id="avaliar_produto">
+<a class="viewcode-back" href="../avaliacoes.html#avaliacoes.avaliar_produto">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">avaliar_produto</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">nome</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Permite ao utilizador avaliar um produto que já tenha comprado.</span>
+
+<span class="sd">    Fluxo:</span>
+<span class="sd">        - Busca produtos por termo (ilike no nome).</span>
+<span class="sd">        - Valida se o utilizador comprou o produto selecionado.</span>
+<span class="sd">        - Upsert em `avaliacoes` com estrelas (1–5) e comentário opcional.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        user_id (str): ID do utilizador autenticado.</span>
+<span class="sd">        nome (str): Nome do utilizador (UI).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        None</span>
+
+<span class="sd">    Side Effects:</span>
+<span class="sd">        - Lê tabelas `produtos` e `compras`.</span>
+<span class="sd">        - Grava/atualiza registo em `avaliacoes`.</span>
+<span class="sd">        - Interação completa via terminal.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">limpar_terminal</span><span class="p">()</span>
+    <span class="n">cabecalho</span><span class="p">(</span><span class="s2">&quot;Avaliar Produto&quot;</span><span class="p">,</span> <span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+
+    <span class="n">termo</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;🔎 Digite parte do nome do produto: &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">animar_carregamento</span><span class="p">(</span><span class="s2">&quot;A procurar produtos...&quot;</span><span class="p">)</span>
+    <span class="n">produtos</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;produtos&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;id, nome&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">ilike</span><span class="p">(</span><span class="s2">&quot;nome&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;%</span><span class="si">{</span><span class="n">termo</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">data</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">produtos</span><span class="p">:</span>
+        <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;❌ Produto não encontrado.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+        <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+        <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">🎮 Produtos encontrados:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">produtos</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;nome&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">👉 Escolha o número do produto: &quot;</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">produto_id</span> <span class="o">=</span> <span class="n">produtos</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;❌ Escolha inválida.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+        <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+        <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">animar_carregamento</span><span class="p">(</span><span class="s2">&quot;A verificar compras...&quot;</span><span class="p">)</span>
+    <span class="n">compras</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;compras&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;produto_id&quot;</span><span class="p">,</span> <span class="n">produto_id</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">compras</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+        <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;⚠️ Só podes avaliar produtos que já compraste.&quot;</span><span class="p">,</span> <span class="s2">&quot;alerta&quot;</span><span class="p">)</span>
+        <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+        <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">ja_avaliou</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;avaliacoes&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;produto_id&quot;</span><span class="p">,</span> <span class="n">produto_id</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">ja_avaliou</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+        <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;⚠️ Já existe uma avaliação. A tua avaliação será atualizada.&quot;</span><span class="p">,</span> <span class="s2">&quot;alerta&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">estrelas</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">input</span><span class="p">(</span><span class="s2">&quot;⭐ Classificação (1 a 5 estrelas): &quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">estrelas</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">estrelas</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;❌ Valor inválido. Insere um número entre 1 e 5.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+        <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+        <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">comentario</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;💬 Comentário (opcional): &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;avaliacoes&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">upsert</span><span class="p">({</span>
+        <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span>
+        <span class="s2">&quot;produto_id&quot;</span><span class="p">:</span> <span class="n">produto_id</span><span class="p">,</span>
+        <span class="s2">&quot;estrelas&quot;</span><span class="p">:</span> <span class="n">estrelas</span><span class="p">,</span>
+        <span class="s2">&quot;comentario&quot;</span><span class="p">:</span> <span class="n">comentario</span><span class="p">,</span>
+        <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+    <span class="p">})</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+    <span class="n">notificar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Avaliação registada: </span><span class="si">{</span><span class="n">estrelas</span><span class="si">}</span><span class="s2"> ⭐ para </span><span class="si">{</span><span class="n">produtos</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="s1">&#39;nome&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;sucesso&quot;</span><span class="p">)</span>
+    <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+    <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># === VER MÉDIA DE AVALIAÇÕES ===</span>
+<div class="viewcode-block" id="ver_media_avaliacoes">
+<a class="viewcode-back" href="../avaliacoes.html#avaliacoes.ver_media_avaliacoes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ver_media_avaliacoes</span><span class="p">(</span><span class="n">nome</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apresenta uma tabela com médias de avaliação por produto.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        nome (str): Nome do utilizador para UI (cliente/admin).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        None</span>
+
+<span class="sd">    Side Effects:</span>
+<span class="sd">        - Lê `produtos` e `avaliacoes`.</span>
+<span class="sd">        - Calcula média e total de avaliações por produto.</span>
+<span class="sd">        - Imprime tabela com estrelas e estatísticas.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">limpar_terminal</span><span class="p">()</span>
+    <span class="n">cabecalho</span><span class="p">(</span><span class="s2">&quot;Médias de Avaliação&quot;</span><span class="p">,</span> <span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+    <span class="n">animar_carregamento</span><span class="p">(</span><span class="s2">&quot;A calcular médias...&quot;</span><span class="p">)</span>
+
+    <span class="n">produtos</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;produtos&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;id, nome&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">produtos</span><span class="p">:</span>
+        <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;❌ Nenhum produto encontrado.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+        <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+        <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">tabela</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">produtos</span><span class="p">:</span>
+        <span class="n">avals</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;avaliacoes&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;estrelas&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;produto_id&quot;</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+            <span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">data</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">avals</span><span class="p">:</span>
+            <span class="n">media</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="s2">&quot;estrelas&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">avals</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">avals</span><span class="p">)</span>
+            <span class="n">tabela</span><span class="o">.</span><span class="n">append</span><span class="p">([</span>
+                <span class="n">p</span><span class="p">[</span><span class="s2">&quot;nome&quot;</span><span class="p">],</span>
+                <span class="n">render_stars</span><span class="p">(</span><span class="n">media</span><span class="p">),</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">media</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">/5&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">avals</span><span class="p">)</span><span class="si">}</span><span class="s2"> avaliações&quot;</span>
+            <span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tabela</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;nome&quot;</span><span class="p">],</span> <span class="s2">&quot;—&quot;</span><span class="p">,</span> <span class="s2">&quot;—&quot;</span><span class="p">,</span> <span class="s2">&quot;Sem avaliações&quot;</span><span class="p">])</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">Fore</span><span class="o">.</span><span class="n">MAGENTA</span> <span class="o">+</span> <span class="s2">&quot;📊 Avaliações de Produtos</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">tabela</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Produto&quot;</span><span class="p">,</span> <span class="s2">&quot;Classificação&quot;</span><span class="p">,</span> <span class="s2">&quot;Média&quot;</span><span class="p">,</span> <span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="n">tablefmt</span><span class="o">=</span><span class="s2">&quot;fancy_grid&quot;</span><span class="p">))</span>
+    <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+    <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># === MENU PRINCIPAL ===</span>
+<div class="viewcode-block" id="menu_avaliacoes">
+<a class="viewcode-back" href="../avaliacoes.html#avaliacoes.menu_avaliacoes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">menu_avaliacoes</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loop de menu para funcionalidades de avaliação.</span>
+
+<span class="sd">    Comportamento:</span>
+<span class="sd">        - Se não houver sessão válida, informa e retorna ao chamador.</span>
+<span class="sd">        - Para clientes: permite avaliar produto e ver médias.</span>
+<span class="sd">        - Para admin: mostra diretamente as médias.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sessao</span> <span class="o">=</span> <span class="n">carregar_sessao</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">sessao</span><span class="p">:</span>
+        <span class="n">limpar_terminal</span><span class="p">()</span>
+        <span class="n">cabecalho</span><span class="p">(</span><span class="s2">&quot;Avaliações&quot;</span><span class="p">)</span>
+        <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;⛔ Precisas de fazer login para aceder às avaliações.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+        <span class="n">rodape</span><span class="p">()</span>
+        <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">sessao</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="n">nome</span> <span class="o">=</span> <span class="n">sessao</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nome&quot;</span><span class="p">,</span> <span class="s2">&quot;Utilizador&quot;</span><span class="p">)</span>
+    <span class="n">tipo</span> <span class="o">=</span> <span class="n">sessao</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tipo&quot;</span><span class="p">,</span> <span class="s2">&quot;cliente&quot;</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">limpar_terminal</span><span class="p">()</span>
+        <span class="n">cabecalho</span><span class="p">(</span><span class="s2">&quot;Avaliações&quot;</span><span class="p">,</span> <span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">tipo</span> <span class="o">==</span> <span class="s2">&quot;cliente&quot;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">Fore</span><span class="o">.</span><span class="n">MAGENTA</span> <span class="o">+</span> <span class="s2">&quot;⭐ Menu de Avaliações&quot;</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;1️⃣ Avaliar um produto comprado&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;2️⃣ Ver médias de avaliação&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;0️⃣ Voltar&quot;</span><span class="p">)</span>
+
+            <span class="n">escolha</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">👉 Escolha uma opção: &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">escolha</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span><span class="p">:</span>
+                <span class="n">avaliar_produto</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">nome</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">escolha</span> <span class="o">==</span> <span class="s2">&quot;2&quot;</span><span class="p">:</span>
+                <span class="n">ver_media_avaliacoes</span><span class="p">(</span><span class="n">nome</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">escolha</span> <span class="o">==</span> <span class="s2">&quot;0&quot;</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;❌ Opção inválida.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+                <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para continuar...&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">tipo</span> <span class="o">==</span> <span class="s2">&quot;admin&quot;</span><span class="p">:</span>
+            <span class="c1"># Para admin, mostra as médias diretamente e sai</span>
+            <span class="n">ver_media_avaliacoes</span><span class="p">(</span><span class="n">nome</span><span class="p">)</span>
+            <span class="k">break</span></div>
+
+
+
+<span class="c1"># === EXECUÇÃO DIRETA ===</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">menu_avaliacoes</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../auth.html">auth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compras.html">compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../produtos.html">produtos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">ui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -6,6 +6,7 @@ Funções:
 - Gestão de sessão (guardar/carregar/limpar).
 - Invocação de scripts auxiliares (produtos, compras, comentários, avaliações, etc.).
 - Login/Registo/Recuperação de senha via módulos de autenticação/Supabase.
+
 """
 
 import sys, os, time, json, subprocess, random, shutil, threading
@@ -197,16 +198,16 @@ def main_menu():
     Loop principal do menu global da aplicação.
 
     Opções:
-        1) Login / Recuperação
-        2) Registo
-        3) Produtos
-        4) Compras
-        5) Comentários
-        7) Avaliações
-        8) Comparar Jogos
-        9) Wishlist
-        6) Configurações (tema)
-        0) Sair
+        - 1) Login / Recuperação
+        - 2) Registo
+        - 3) Produtos
+        - 4) Compras
+        - 5) Comentários
+        - 7) Avaliações
+        - 8) Comparar Jogos
+        - 9) Wishlist
+        - 6) Configurações (tema)
+        - 0) Sair
 
     Side Effects:
         - I/O no terminal, invoca subprocessos para módulos auxiliares.

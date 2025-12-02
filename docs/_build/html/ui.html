@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>ui module &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="wishlist module" href="wishlist.html" />
+    <link rel="prev" title="produtos_utils module" href="produtos_utils.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-ui">
+<span id="ui-module"></span><h1>ui module<a class="headerlink" href="#module-ui" title="Link to this heading">¶</a></h1>
+<p>Módulo de interface de terminal (UI) da Loja Checkpoint.</p>
+<dl class="simple">
+<dt>Este módulo centraliza elementos visuais reutilizáveis na aplicação:</dt><dd><ul class="simple">
+<li><p>Limpeza do terminal</p></li>
+<li><p>Cabeçalho padrão com estado do utilizador e hora atual</p></li>
+<li><p>Animação de carregamento</p></li>
+<li><p>Rodapé padrão com tema, utilizador e assinatura</p></li>
+</ul>
+</dd>
+</dl>
+<p>É utilizado por vários outros módulos (menus, carrinho, produtos, etc.)
+para garantir uma apresentação consistente no terminal.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ui.animar_carregamento">
+<span class="sig-prename descclassname"><span class="pre">ui.</span></span><span class="sig-name descname"><span class="pre">animar_carregamento</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mensagem</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'A</span> <span class="pre">carregar...'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ui.html#animar_carregamento"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ui.animar_carregamento" title="Link to this definition">¶</a></dt>
+<dd><p>Mostra uma animação curta de carregamento no terminal.</p>
+<p>A animação é composta por uma sequência de símbolos em movimento,
+apresentada na mesma linha, acompanhada pela mensagem fornecida.</p>
+<p>Duração aproximada: ~2 segundos.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mensagem</strong> (<em>str</em><em>, </em><em>optional</em>) – Texto a mostrar ao lado da animação.
+Por omissão é <code class="docutils literal notranslate"><span class="pre">&quot;A</span> <span class="pre">carregar...&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A função apenas escreve no <code class="docutils literal notranslate"><span class="pre">stdout</span></code> e faz pequenas pausas.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ui.cabecalho">
+<span class="sig-prename descclassname"><span class="pre">ui.</span></span><span class="sig-name descname"><span class="pre">cabecalho</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">secao_nome</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">utilizador</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dark'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ui.html#cabecalho"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ui.cabecalho" title="Link to this definition">¶</a></dt>
+<dd><p>Exibe o cabeçalho padrão da Loja Checkpoint.</p>
+<dl class="simple">
+<dt>O cabeçalho inclui:</dt><dd><ul class="simple">
+<li><p>Nome da loja e nome da secção atual.</p></li>
+<li><p>Estado do utilizador: online (verde) ou offline (vermelho).</p></li>
+<li><p>Data e hora atuais.</p></li>
+<li><p>Separadores com linhas horizontais.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>secao_nome</strong> (<em>str</em>) – Nome da secção a apresentar no cabeçalho
+(por exemplo, <code class="docutils literal notranslate"><span class="pre">&quot;Carrinho&quot;</span></code> ou <code class="docutils literal notranslate"><span class="pre">&quot;Catálogo</span> <span class="pre">de</span> <span class="pre">Produtos&quot;</span></code>).</p></li>
+<li><p><strong>utilizador</strong> (<em>str</em><em> | </em><em>None</em>) – Nome do utilizador autenticado. Se for
+<code class="docutils literal notranslate"><span class="pre">None</span></code>, é mostrado como offline.</p></li>
+<li><p><strong>tema</strong> (<em>str</em><em>, </em><em>optional</em>) – Nome do tema visual (apenas informativo
+neste contexto). Por omissão é <code class="docutils literal notranslate"><span class="pre">&quot;dark&quot;</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ui.limpar_terminal">
+<span class="sig-prename descclassname"><span class="pre">ui.</span></span><span class="sig-name descname"><span class="pre">limpar_terminal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ui.html#limpar_terminal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ui.limpar_terminal" title="Link to this definition">¶</a></dt>
+<dd><p>Limpa o terminal da consola.</p>
+<dl class="simple">
+<dt>Deteta automaticamente o sistema operativo:</dt><dd><ul class="simple">
+<li><p>Em Windows usa o comando <code class="docutils literal notranslate"><span class="pre">cls</span></code>.</p></li>
+<li><p>Em sistemas Unix-like (Linux, macOS) usa o comando <code class="docutils literal notranslate"><span class="pre">clear</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A função apenas executa o comando de sistema.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ui.rodape">
+<span class="sig-prename descclassname"><span class="pre">ui.</span></span><span class="sig-name descname"><span class="pre">rodape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">utilizador</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dark'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ui.html#rodape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ui.rodape" title="Link to this definition">¶</a></dt>
+<dd><p>Mostra o rodapé padrão da aplicação.</p>
+<dl class="simple">
+<dt>O rodapé inclui:</dt><dd><ul class="simple">
+<li><p>Nome do tema atual.</p></li>
+<li><p>Nome (ou ausência) do utilizador autenticado.</p></li>
+<li><p>Assinatura com o nome da loja e ano.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>utilizador</strong> (<em>str</em><em> | </em><em>None</em>) – Nome do utilizador autenticado.
+Se <code class="docutils literal notranslate"><span class="pre">None</span></code>, é indicado como “não autenticado”.</p></li>
+<li><p><strong>tema</strong> (<em>str</em><em>, </em><em>optional</em>) – Nome do tema visual (informativo).
+Por omissão é <code class="docutils literal notranslate"><span class="pre">&quot;dark&quot;</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Apenas escreve o rodapé no terminal.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="auth.html">auth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compras.html">compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos.html">produtos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ui module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#ui.animar_carregamento"><code class="docutils literal notranslate"><span class="pre">animar_carregamento()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ui.cabecalho"><code class="docutils literal notranslate"><span class="pre">cabecalho()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ui.limpar_terminal"><code class="docutils literal notranslate"><span class="pre">limpar_terminal()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ui.rodape"><code class="docutils literal notranslate"><span class="pre">rodape()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="produtos_utils.html" title="previous chapter">produtos_utils module</a></li>
+      <li>Next: <a href="wishlist.html" title="next chapter">wishlist module</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/ui.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

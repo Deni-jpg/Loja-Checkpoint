@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>carrinho &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for carrinho</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Módulo de gestão do carrinho de compras.</span>
+
+<span class="sd">Este módulo trata de:</span>
+<span class="sd">- Gestão da sessão do utilizador ligada ao carrinho.</span>
+<span class="sd">- Criação e recuperação de carrinhos ativos.</span>
+<span class="sd">- Adição, remoção e listagem de itens no carrinho.</span>
+<span class="sd">- Cálculo do total do carrinho.</span>
+<span class="sd">- Registo de compras concluídas na base de dados.</span>
+<span class="sd">- Exibição de histórico simples e detalhado de compras.</span>
+<span class="sd">- Interface de linha de comando para interação com o carrinho.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">notificacao_email</span><span class="w"> </span><span class="kn">import</span> <span class="n">enviar_email</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">db</span><span class="w"> </span><span class="kn">import</span> <span class="n">supabase</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ui</span><span class="w"> </span><span class="kn">import</span> <span class="n">cabecalho</span><span class="p">,</span> <span class="n">rodape</span><span class="p">,</span> <span class="n">limpar_terminal</span><span class="p">,</span> <span class="n">animar_carregamento</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">colorama</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fore</span><span class="p">,</span> <span class="n">Style</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tabulate</span><span class="w"> </span><span class="kn">import</span> <span class="n">tabulate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="n">SESSAO_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;sessao.json&quot;</span>
+
+
+<span class="c1"># === Sessão ===</span>
+<div class="viewcode-block" id="carregar_sessao">
+<a class="viewcode-back" href="../carrinho.html#carrinho.carregar_sessao">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">carregar_sessao</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Carrega a sessão do utilizador a partir do ficheiro JSON.</span>
+
+<span class="sd">    O ficheiro de sessão é definido pela constante ``SESSAO_PATH``.</span>
+<span class="sd">    Caso o ficheiro não exista ou ocorra algum erro na leitura/parse,</span>
+<span class="sd">    a função devolve ``None``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict | None: Dicionário com os dados da sessão</span>
+<span class="sd">        (por exemplo, ``{&quot;id&quot;: ..., &quot;nome&quot;: ...}``) ou ``None``</span>
+<span class="sd">        se não for possível carregar a sessão.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">SESSAO_PATH</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<span class="c1"># === Notificação colorida ===</span>
+<div class="viewcode-block" id="notificar">
+<a class="viewcode-back" href="../carrinho.html#carrinho.notificar">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">notificar</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">tipo</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mostra uma mensagem colorida no terminal.</span>
+
+<span class="sd">    A cor é escolhida com base no tipo de notificação:</span>
+<span class="sd">    ``info``, ``sucesso``, ``erro`` ou ``alerta``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        msg (str): Texto da mensagem a apresentar.</span>
+<span class="sd">        tipo (str, optional): Tipo de mensagem. Pode ser</span>
+<span class="sd">            ``&quot;info&quot;``, ``&quot;sucesso&quot;``, ``&quot;erro&quot;`` ou ``&quot;alerta&quot;``.</span>
+<span class="sd">            Por omissão é ``&quot;info&quot;``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cores</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;info&quot;</span><span class="p">:</span> <span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span><span class="p">,</span>
+        <span class="s2">&quot;sucesso&quot;</span><span class="p">:</span> <span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span><span class="p">,</span>
+        <span class="s2">&quot;erro&quot;</span><span class="p">:</span> <span class="n">Fore</span><span class="o">.</span><span class="n">RED</span><span class="p">,</span>
+        <span class="s2">&quot;alerta&quot;</span><span class="p">:</span> <span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span>
+    <span class="p">}</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tipo</span><span class="p">,</span><span class="w"> </span><span class="n">Fore</span><span class="o">.</span><span class="n">WHITE</span><span class="p">)</span><span class="si">}</span><span class="s2">🔔 </span><span class="si">{</span><span class="n">msg</span><span class="si">}{</span><span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># === Carrinho base ===</span>
+<div class="viewcode-block" id="obter_ou_criar_carrinho">
+<a class="viewcode-back" href="../carrinho.html#carrinho.obter_ou_criar_carrinho">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">obter_ou_criar_carrinho</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Obtém o carrinho ativo do utilizador ou cria um novo.</span>
+
+<span class="sd">    Procura um registo na tabela ``carrinhos`` com o campo</span>
+<span class="sd">    ``ativo = True`` para o ``user_id`` fornecido. Se existir,</span>
+<span class="sd">    devolve o ``id`` desse carrinho. Caso contrário, cria um</span>
+<span class="sd">    novo carrinho ativo para o utilizador.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        user_id (str | int): Identificador do utilizador</span>
+<span class="sd">            na base de dados.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        int | str: ID do carrinho ativo associado ao utilizador.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">animar_carregamento</span><span class="p">(</span><span class="s2">&quot;A verificar carrinho ativo...&quot;</span><span class="p">)</span>
+    <span class="n">resp</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;carrinhos&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;ativo&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">resp</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+    <span class="n">novo</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;carrinhos&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">insert</span><span class="p">({</span><span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span> <span class="s2">&quot;ativo&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">novo</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="adicionar_item">
+<a class="viewcode-back" href="../carrinho.html#carrinho.adicionar_item">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">adicionar_item</span><span class="p">(</span><span class="n">carrinho_id</span><span class="p">,</span> <span class="n">produto_id</span><span class="p">,</span> <span class="n">quantidade</span><span class="p">,</span> <span class="n">preco_unitario</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adiciona um item ao carrinho na base de dados.</span>
+
+<span class="sd">    Cria um registo na tabela ``itens_carrinho`` com a quantidade,</span>
+<span class="sd">    preço unitário e referência ao carrinho e produto.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        carrinho_id (int | str): ID do carrinho ao qual o item</span>
+<span class="sd">            será associado.</span>
+<span class="sd">        produto_id (int | str): ID do produto a adicionar.</span>
+<span class="sd">        quantidade (int): Quantidade do produto.</span>
+<span class="sd">        preco_unitario (float): Preço unitário do produto no momento</span>
+<span class="sd">            da adição ao carrinho.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;itens_carrinho&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">insert</span><span class="p">({</span>
+        <span class="s2">&quot;carrinho_id&quot;</span><span class="p">:</span> <span class="n">carrinho_id</span><span class="p">,</span>
+        <span class="s2">&quot;produto_id&quot;</span><span class="p">:</span> <span class="n">produto_id</span><span class="p">,</span>
+        <span class="s2">&quot;quantidade&quot;</span><span class="p">:</span> <span class="n">quantidade</span><span class="p">,</span>
+        <span class="s2">&quot;preco_unitario&quot;</span><span class="p">:</span> <span class="n">preco_unitario</span>
+    <span class="p">})</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="listar_itens">
+<a class="viewcode-back" href="../carrinho.html#carrinho.listar_itens">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">listar_itens</span><span class="p">(</span><span class="n">carrinho_id</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lista os itens atuais de um carrinho.</span>
+
+<span class="sd">    Busca os itens na tabela ``itens_carrinho`` e, para cada item,</span>
+<span class="sd">    consulta os dados do produto na tabela ``produtos`` (nome).</span>
+<span class="sd">    Calcula também o total de cada linha (quantidade * preço unitário).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        carrinho_id (int | str): ID do carrinho cujos itens</span>
+<span class="sd">            devem ser listados.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[dict]: Lista de dicionários com as chaves:</span>
+<span class="sd">            - ``nome`` (str): Nome do produto.</span>
+<span class="sd">            - ``quantidade`` (int): Quantidade do produto.</span>
+<span class="sd">            - ``preco_unitario`` (float): Preço unitário.</span>
+<span class="sd">            - ``total`` (float): Total da linha (quantidade * preço_unitário).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">animar_carregamento</span><span class="p">(</span><span class="s2">&quot;A carregar itens do carrinho...&quot;</span><span class="p">)</span>
+    <span class="n">resp</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;itens_carrinho&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;produto_id, quantidade, preco_unitario&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;carrinho_id&quot;</span><span class="p">,</span> <span class="n">carrinho_id</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">itens</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">data</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="n">lista</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">itens</span><span class="p">:</span>
+        <span class="n">produto_resp</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;produtos&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;nome&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;produto_id&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+        <span class="n">nome</span> <span class="o">=</span> <span class="n">produto_resp</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;nome&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">produto_resp</span><span class="o">.</span><span class="n">data</span> <span class="k">else</span> <span class="s2">&quot;Desconhecido&quot;</span>
+        <span class="n">lista</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+            <span class="s2">&quot;nome&quot;</span><span class="p">:</span> <span class="n">nome</span><span class="p">,</span>
+            <span class="s2">&quot;quantidade&quot;</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;quantidade&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;preco_unitario&quot;</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;preco_unitario&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;quantidade&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;preco_unitario&quot;</span><span class="p">]</span>
+        <span class="p">})</span>
+    <span class="k">return</span> <span class="n">lista</span></div>
+
+
+
+<div class="viewcode-block" id="remover_item">
+<a class="viewcode-back" href="../carrinho.html#carrinho.remover_item">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">remover_item</span><span class="p">(</span><span class="n">carrinho_id</span><span class="p">,</span> <span class="n">produto_id</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove um item específico do carrinho.</span>
+
+<span class="sd">    Apaga da tabela ``itens_carrinho`` o registo que corresponde</span>
+<span class="sd">    ao par (carrinho_id, produto_id).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        carrinho_id (int | str): ID do carrinho.</span>
+<span class="sd">        produto_id (int | str): ID do produto a remover do carrinho.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;itens_carrinho&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;carrinho_id&quot;</span><span class="p">,</span> <span class="n">carrinho_id</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;produto_id&quot;</span><span class="p">,</span> <span class="n">produto_id</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="calcular_total">
+<a class="viewcode-back" href="../carrinho.html#carrinho.calcular_total">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calcular_total</span><span class="p">(</span><span class="n">carrinho_id</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calcula o valor total de um carrinho.</span>
+
+<span class="sd">    Soma ``quantidade * preco_unitario`` de todos os itens</span>
+<span class="sd">    na tabela ``itens_carrinho`` associados ao carrinho.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        carrinho_id (int | str): ID do carrinho.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Valor total do carrinho. Se não existirem itens,</span>
+<span class="sd">        devolve 0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">resp</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;itens_carrinho&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;quantidade, preco_unitario&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;carrinho_id&quot;</span><span class="p">,</span> <span class="n">carrinho_id</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;quantidade&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;preco_unitario&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">data</span> <span class="ow">or</span> <span class="p">[]))</span></div>
+
+
+
+<div class="viewcode-block" id="finalizar_carrinho">
+<a class="viewcode-back" href="../carrinho.html#carrinho.finalizar_carrinho">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">finalizar_carrinho</span><span class="p">(</span><span class="n">carrinho_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Finaliza a compra do carrinho atual.</span>
+
+<span class="sd">    - Obtém todos os itens do carrinho.</span>
+<span class="sd">    - Regista cada unidade comprada na tabela ``compras``.</span>
+<span class="sd">    - Calcula o total da compra.</span>
+<span class="sd">    - Gera uma tabela de resumo (HTML e terminal).</span>
+<span class="sd">    - Marca o carrinho como inativo (``ativo = False``).</span>
+
+<span class="sd">    Mostra no terminal um resumo da compra, incluindo lista</span>
+<span class="sd">    de produtos, total pago e data/hora da compra.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        carrinho_id (int | str): ID do carrinho a finalizar.</span>
+<span class="sd">        user_id (int | str): ID do utilizador que está a comprar.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        None: A função atua sobre a base de dados e o terminal,</span>
+<span class="sd">        não devolvendo valor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Obtém os itens do carrinho</span>
+    <span class="n">resp</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;itens_carrinho&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;produto_id, quantidade&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;carrinho_id&quot;</span><span class="p">,</span> <span class="n">carrinho_id</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="n">itens</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">data</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">itens</span><span class="p">:</span>
+        <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;❌ O carrinho está vazio.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">animar_carregamento</span><span class="p">(</span><span class="s2">&quot;A finalizar compra...&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Carrega dados do utilizador (apenas perfil)</span>
+    <span class="n">perfil_resp</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;perfil&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;nome&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="n">nome</span> <span class="o">=</span> <span class="n">perfil_resp</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;nome&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">perfil_resp</span><span class="o">.</span><span class="n">data</span> <span class="k">else</span> <span class="s2">&quot;Utilizador&quot;</span>
+
+    <span class="c1"># Monta tabela HTML dos produtos (mesmo que não envies por email)</span>
+    <span class="n">tabela_html</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">itens</span><span class="p">:</span>
+        <span class="n">prod_resp</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;produtos&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;nome, preco, plataforma&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;produto_id&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">prod_resp</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">prod_resp</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">subtotal</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;preco&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;quantidade&quot;</span><span class="p">]</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="n">subtotal</span>
+
+        <span class="c1"># insere compra individual</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;quantidade&quot;</span><span class="p">]):</span>
+            <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;compras&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">insert</span><span class="p">({</span>
+                <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span>
+                <span class="s2">&quot;produto_id&quot;</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;produto_id&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="p">})</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+        <span class="n">tabela_html</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            &lt;tr style=&quot;text-align:center;&quot;&gt;</span>
+<span class="s2">                &lt;td&gt;</span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;nome&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&lt;/td&gt;</span>
+<span class="s2">                &lt;td&gt;</span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;plataforma&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&lt;/td&gt;</span>
+<span class="s2">                &lt;td&gt;</span><span class="si">{</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;quantidade&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&lt;/td&gt;</span>
+<span class="s2">                &lt;td&gt;€</span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;preco&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&lt;/td&gt;</span>
+<span class="s2">                &lt;td&gt;€</span><span class="si">{</span><span class="n">subtotal</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&lt;/td&gt;</span>
+<span class="s2">            &lt;/tr&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+
+    <span class="c1"># Fecha o carrinho</span>
+    <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;carrinhos&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;ativo&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">carrinho_id</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+    <span class="c1"># Mostra resumo no terminal</span>
+    <span class="n">limpar_terminal</span><span class="p">()</span>
+    <span class="n">cabecalho</span><span class="p">(</span><span class="s2">&quot;Compra Finalizada&quot;</span><span class="p">,</span> <span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span> <span class="o">+</span> <span class="s2">&quot;✅ Compra finalizada com sucesso!</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;nome&quot;</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;plataforma&quot;</span><span class="p">],</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;quantidade&quot;</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;€</span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;preco&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;€</span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;preco&#39;</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;quantidade&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">itens</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;produtos&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;nome, plataforma, preco&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;produto_id&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span><span class="o">.</span><span class="n">data</span>
+        <span class="p">],</span>
+        <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Produto&quot;</span><span class="p">,</span> <span class="s2">&quot;Plataforma&quot;</span><span class="p">,</span> <span class="s2">&quot;Qtd&quot;</span><span class="p">,</span> <span class="s2">&quot;Preço Unit.&quot;</span><span class="p">,</span> <span class="s2">&quot;Total&quot;</span><span class="p">],</span>
+        <span class="n">tablefmt</span><span class="o">=</span><span class="s2">&quot;fancy_grid&quot;</span>
+    <span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">💰 Total pago: </span><span class="si">{</span><span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">€</span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}{</span><span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🕒 Data da compra: </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%d</span><span class="s1">/%m/%Y %H:%M&#39;</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+    <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;🛒 Compra registada na tua conta!&quot;</span><span class="p">,</span> <span class="s2">&quot;sucesso&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># === Histórico de compras ===</span>
+<div class="viewcode-block" id="historico_compras">
+<a class="viewcode-back" href="../carrinho.html#carrinho.historico_compras">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">historico_compras</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">nome</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mostra o histórico simples de compras do utilizador.</span>
+
+<span class="sd">    Lista cada compra individual (uma linha por entrada na tabela</span>
+<span class="sd">    ``compras``), com o produto, plataforma, preço e data/hora.</span>
+
+<span class="sd">    A informação é mostrada no terminal numa tabela formatada.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        user_id (int | str): ID do utilizador na base de dados.</span>
+<span class="sd">        nome (str): Nome do utilizador para exibição na UI.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">limpar_terminal</span><span class="p">()</span>
+    <span class="n">cabecalho</span><span class="p">(</span><span class="s2">&quot;Histórico de Compras&quot;</span><span class="p">,</span> <span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+
+    <span class="n">animar_carregamento</span><span class="p">(</span><span class="s2">&quot;A carregar histórico...&quot;</span><span class="p">)</span>
+    <span class="n">resp</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;compras&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;produto_id, data&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="p">)</span>
+
+    <span class="n">compras</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">data</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">compras</span><span class="p">:</span>
+        <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;📭 Ainda não fizeste nenhuma compra.&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
+        <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+        <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">tabela</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">total_gasto</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">compras</span><span class="p">:</span>
+        <span class="n">prod</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;produtos&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;nome, preco, plataforma&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="s2">&quot;produto_id&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">prod</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">prod</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">total_gasto</span> <span class="o">+=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;preco&quot;</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">/%m/%Y %H:%M&quot;</span><span class="p">)</span>
+        <span class="n">tabela</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;nome&quot;</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;plataforma&quot;</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;€</span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;preco&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">])</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">🧾 Histórico de Compras&quot;</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">tabela</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Produto&quot;</span><span class="p">,</span> <span class="s2">&quot;Plataforma&quot;</span><span class="p">,</span> <span class="s2">&quot;Preço&quot;</span><span class="p">,</span> <span class="s2">&quot;Data&quot;</span><span class="p">],</span> <span class="n">tablefmt</span><span class="o">=</span><span class="s2">&quot;fancy_grid&quot;</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">💰 Total gasto: </span><span class="si">{</span><span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">€</span><span class="si">{</span><span class="n">total_gasto</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}{</span><span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+    <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="historico_detalhado">
+<a class="viewcode-back" href="../carrinho.html#carrinho.historico_detalhado">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">historico_detalhado</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">nome</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mostra o histórico detalhado de compras do utilizador.</span>
+
+<span class="sd">    Agrupa as compras por produto, mostrando:</span>
+<span class="sd">    - Nome do produto</span>
+<span class="sd">    - Plataforma</span>
+<span class="sd">    - Quantidade total adquirida</span>
+<span class="sd">    - Preço unitário</span>
+<span class="sd">    - Subtotal por produto</span>
+
+<span class="sd">    A informação é mostrada no terminal numa tabela formatada.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        user_id (int | str): ID do utilizador na base de dados.</span>
+<span class="sd">        nome (str): Nome do utilizador para exibição na UI.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">limpar_terminal</span><span class="p">()</span>
+    <span class="n">cabecalho</span><span class="p">(</span><span class="s2">&quot;Histórico Detalhado&quot;</span><span class="p">,</span> <span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+
+    <span class="n">animar_carregamento</span><span class="p">(</span><span class="s2">&quot;A carregar detalhes de compra...&quot;</span><span class="p">)</span>
+    <span class="n">resp</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;compras&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;produto_id, data&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="p">)</span>
+
+    <span class="n">compras</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">data</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">compras</span><span class="p">:</span>
+        <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;📭 Ainda não fizeste nenhuma compra.&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
+        <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+        <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">agrupado</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">compras</span><span class="p">:</span>
+        <span class="n">pid</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="s2">&quot;produto_id&quot;</span><span class="p">]</span>
+        <span class="n">agrupado</span><span class="p">[</span><span class="n">pid</span><span class="p">]</span> <span class="o">=</span> <span class="n">agrupado</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="n">tabela</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">total_gasto</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">pid</span><span class="p">,</span> <span class="n">qtd</span> <span class="ow">in</span> <span class="n">agrupado</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;produtos&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;nome, preco, plataforma&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">pid</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">prod</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">subtotal</span> <span class="o">=</span> <span class="n">prod</span><span class="p">[</span><span class="s2">&quot;preco&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">qtd</span>
+        <span class="n">total_gasto</span> <span class="o">+=</span> <span class="n">subtotal</span>
+        <span class="n">tabela</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">prod</span><span class="p">[</span><span class="s2">&quot;nome&quot;</span><span class="p">],</span> <span class="n">prod</span><span class="p">[</span><span class="s2">&quot;plataforma&quot;</span><span class="p">],</span> <span class="n">qtd</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;€</span><span class="si">{</span><span class="n">prod</span><span class="p">[</span><span class="s1">&#39;preco&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;€</span><span class="si">{</span><span class="n">subtotal</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">Fore</span><span class="o">.</span><span class="n">MAGENTA</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">📦 Histórico Detalhado de Compras</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">tabela</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Produto&quot;</span><span class="p">,</span> <span class="s2">&quot;Plataforma&quot;</span><span class="p">,</span> <span class="s2">&quot;Qtd&quot;</span><span class="p">,</span> <span class="s2">&quot;Preço Unit.&quot;</span><span class="p">,</span> <span class="s2">&quot;Subtotal&quot;</span><span class="p">],</span> <span class="n">tablefmt</span><span class="o">=</span><span class="s2">&quot;fancy_grid&quot;</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">💰 Total gasto: </span><span class="si">{</span><span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">€</span><span class="si">{</span><span class="n">total_gasto</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}{</span><span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+    <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># === Interface ===</span>
+<div class="viewcode-block" id="menu_compras">
+<a class="viewcode-back" href="../carrinho.html#carrinho.menu_compras">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">menu_compras</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu principal de compras/carrinho na interface de linha de comando.</span>
+
+<span class="sd">    Este menu permite ao utilizador:</span>
+<span class="sd">        1. Adicionar produto ao carrinho.</span>
+<span class="sd">        2. Ver carrinho atual.</span>
+<span class="sd">        3. Remover item do carrinho.</span>
+<span class="sd">        4. Finalizar compra.</span>
+<span class="sd">        5. Ver histórico simples de compras.</span>
+<span class="sd">        6. Ver histórico detalhado de compras.</span>
+<span class="sd">        0. Voltar (sair do menu).</span>
+
+<span class="sd">    A função depende de uma sessão válida, carregada a partir</span>
+<span class="sd">    do ficheiro ``sessao.json``. Caso não exista sessão, o</span>
+<span class="sd">    utilizador é informado de que precisa fazer login.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        None: A função é interativa e não devolve valor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sessao</span> <span class="o">=</span> <span class="n">carregar_sessao</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">sessao</span><span class="p">:</span>
+        <span class="n">limpar_terminal</span><span class="p">()</span>
+        <span class="n">cabecalho</span><span class="p">(</span><span class="s2">&quot;Carrinho&quot;</span><span class="p">)</span>
+        <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;⛔ Precisas de fazer login para aceder às compras.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+        <span class="n">rodape</span><span class="p">()</span>
+        <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">sessao</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="n">nome</span> <span class="o">=</span> <span class="n">sessao</span><span class="p">[</span><span class="s2">&quot;nome&quot;</span><span class="p">]</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">limpar_terminal</span><span class="p">()</span>
+        <span class="n">cabecalho</span><span class="p">(</span><span class="s2">&quot;Carrinho de Compras&quot;</span><span class="p">,</span> <span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="n">Fore</span><span class="o">.</span><span class="n">MAGENTA</span> <span class="o">+</span> <span class="s2">&quot;🛒 Menu de Compras&quot;</span> <span class="o">+</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;1️⃣  Adicionar produto ao carrinho&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;2️⃣  Ver carrinho atual&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;3️⃣  Remover item&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;4️⃣  Finalizar compra&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;5️⃣  Ver histórico simples&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;6️⃣  Ver histórico detalhado&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;0️⃣  Voltar&quot;</span><span class="p">)</span>
+        <span class="n">escolha</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">👉 Escolha uma opção: &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+        <span class="n">carrinho_id</span> <span class="o">=</span> <span class="n">obter_ou_criar_carrinho</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">escolha</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span><span class="p">:</span>
+            <span class="n">termo</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;🔍 Digite parte do nome do produto: &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">animar_carregamento</span><span class="p">(</span><span class="s2">&quot;A procurar produtos...&quot;</span><span class="p">)</span>
+            <span class="n">produtos</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;produtos&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;id, nome, preco, plataforma&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">ilike</span><span class="p">(</span><span class="s2">&quot;nome&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;%</span><span class="si">{</span><span class="n">termo</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">data</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">produtos</span><span class="p">:</span>
+                <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;❌ Nenhum produto encontrado.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+                <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">📋 Produtos encontrados:&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">produtos</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;nome&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;plataforma&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">) - €</span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;preco&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Escolha o número do produto: &quot;</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">produto</span> <span class="o">=</span> <span class="n">produtos</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="n">qtd</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Quantidade: &quot;</span><span class="p">))</span>
+                <span class="n">adicionar_item</span><span class="p">(</span><span class="n">carrinho_id</span><span class="p">,</span> <span class="n">produto</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="n">qtd</span><span class="p">,</span> <span class="n">produto</span><span class="p">[</span><span class="s2">&quot;preco&quot;</span><span class="p">])</span>
+                <span class="n">notificar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ </span><span class="si">{</span><span class="n">produto</span><span class="p">[</span><span class="s1">&#39;nome&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> adicionado ao carrinho.&quot;</span><span class="p">,</span> <span class="s2">&quot;sucesso&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;❌ Erro ao adicionar produto.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+            <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para continuar...&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">escolha</span> <span class="o">==</span> <span class="s2">&quot;2&quot;</span><span class="p">:</span>
+            <span class="n">itens</span> <span class="o">=</span> <span class="n">listar_itens</span><span class="p">(</span><span class="n">carrinho_id</span><span class="p">)</span>
+            <span class="n">limpar_terminal</span><span class="p">()</span>
+            <span class="n">cabecalho</span><span class="p">(</span><span class="s2">&quot;Carrinho Atual&quot;</span><span class="p">,</span> <span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">itens</span><span class="p">:</span>
+                <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;🛒 O teu carrinho está vazio.&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">tabela</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="s2">&quot;nome&quot;</span><span class="p">],</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;quantidade&quot;</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;€</span><span class="si">{</span><span class="n">i</span><span class="p">[</span><span class="s1">&#39;preco_unitario&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;€</span><span class="si">{</span><span class="n">i</span><span class="p">[</span><span class="s1">&#39;total&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">itens</span>
+                <span class="p">]</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">tabela</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Produto&quot;</span><span class="p">,</span> <span class="s2">&quot;Qtd&quot;</span><span class="p">,</span> <span class="s2">&quot;Preço Unit.&quot;</span><span class="p">,</span> <span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="n">tablefmt</span><span class="o">=</span><span class="s2">&quot;fancy_grid&quot;</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">💰 Total: </span><span class="si">{</span><span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">€</span><span class="si">{</span><span class="n">calcular_total</span><span class="p">(</span><span class="n">carrinho_id</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}{</span><span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">rodape</span><span class="p">(</span><span class="n">utilizador</span><span class="o">=</span><span class="n">nome</span><span class="p">)</span>
+            <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">escolha</span> <span class="o">==</span> <span class="s2">&quot;3&quot;</span><span class="p">:</span>
+            <span class="n">itens</span> <span class="o">=</span> <span class="n">listar_itens</span><span class="p">(</span><span class="n">carrinho_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">itens</span><span class="p">:</span>
+                <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;🛒 Carrinho vazio.&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
+                <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Itens no carrinho:&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">itens</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;nome&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;quantidade&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">x)&quot;</span><span class="p">)</span>
+
+            <span class="n">termo</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Digite parte do nome do produto a remover: &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">animar_carregamento</span><span class="p">(</span><span class="s2">&quot;A remover item...&quot;</span><span class="p">)</span>
+            <span class="n">produto_resp</span> <span class="o">=</span> <span class="n">supabase</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">&quot;produtos&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">ilike</span><span class="p">(</span><span class="s2">&quot;nome&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;%</span><span class="si">{</span><span class="n">termo</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">produto_resp</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;❌ Produto não encontrado.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+                <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">remover_item</span><span class="p">(</span><span class="n">carrinho_id</span><span class="p">,</span> <span class="n">produto_resp</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+            <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;🗑️ Produto removido do carrinho.&quot;</span><span class="p">,</span> <span class="s2">&quot;alerta&quot;</span><span class="p">)</span>
+            <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">escolha</span> <span class="o">==</span> <span class="s2">&quot;4&quot;</span><span class="p">:</span>
+            <span class="n">finalizar_carrinho</span><span class="p">(</span><span class="n">carrinho_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+            <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para voltar...&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">escolha</span> <span class="o">==</span> <span class="s2">&quot;5&quot;</span><span class="p">:</span>
+            <span class="n">historico_compras</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">nome</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">escolha</span> <span class="o">==</span> <span class="s2">&quot;6&quot;</span><span class="p">:</span>
+            <span class="n">historico_detalhado</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">nome</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">escolha</span> <span class="o">==</span> <span class="s2">&quot;0&quot;</span><span class="p">:</span>
+            <span class="k">break</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">notificar</span><span class="p">(</span><span class="s2">&quot;❌ Opção inválida.&quot;</span><span class="p">,</span> <span class="s2">&quot;erro&quot;</span><span class="p">)</span>
+            <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ENTER para continuar...&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># === Execução direta ===</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">menu_compras</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../auth.html">auth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compras.html">compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../produtos.html">produtos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">ui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

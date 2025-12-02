@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>carrinho module &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="clientes module" href="clientes.html" />
+    <link rel="prev" title="avaliacoes module" href="avaliacoes.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-carrinho">
+<span id="carrinho-module"></span><h1>carrinho module<a class="headerlink" href="#module-carrinho" title="Link to this heading">¶</a></h1>
+<p>Módulo de gestão do carrinho de compras.</p>
+<p>Este módulo trata de:
+- Gestão da sessão do utilizador ligada ao carrinho.
+- Criação e recuperação de carrinhos ativos.
+- Adição, remoção e listagem de itens no carrinho.
+- Cálculo do total do carrinho.
+- Registo de compras concluídas na base de dados.
+- Exibição de histórico simples e detalhado de compras.
+- Interface de linha de comando para interação com o carrinho.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="carrinho.adicionar_item">
+<span class="sig-prename descclassname"><span class="pre">carrinho.</span></span><span class="sig-name descname"><span class="pre">adicionar_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">carrinho_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">produto_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantidade</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preco_unitario</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/carrinho.html#adicionar_item"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carrinho.adicionar_item" title="Link to this definition">¶</a></dt>
+<dd><p>Adiciona um item ao carrinho na base de dados.</p>
+<p>Cria um registo na tabela <code class="docutils literal notranslate"><span class="pre">itens_carrinho</span></code> com a quantidade,
+preço unitário e referência ao carrinho e produto.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>carrinho_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do carrinho ao qual o item
+será associado.</p></li>
+<li><p><strong>produto_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do produto a adicionar.</p></li>
+<li><p><strong>quantidade</strong> (<em>int</em>) – Quantidade do produto.</p></li>
+<li><p><strong>preco_unitario</strong> (<em>float</em>) – Preço unitário do produto no momento
+da adição ao carrinho.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="carrinho.calcular_total">
+<span class="sig-prename descclassname"><span class="pre">carrinho.</span></span><span class="sig-name descname"><span class="pre">calcular_total</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">carrinho_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/carrinho.html#calcular_total"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carrinho.calcular_total" title="Link to this definition">¶</a></dt>
+<dd><p>Calcula o valor total de um carrinho.</p>
+<p>Soma <code class="docutils literal notranslate"><span class="pre">quantidade</span> <span class="pre">*</span> <span class="pre">preco_unitario</span></code> de todos os itens
+na tabela <code class="docutils literal notranslate"><span class="pre">itens_carrinho</span></code> associados ao carrinho.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>carrinho_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do carrinho.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Valor total do carrinho. Se não existirem itens,
+devolve 0.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="carrinho.carregar_sessao">
+<span class="sig-prename descclassname"><span class="pre">carrinho.</span></span><span class="sig-name descname"><span class="pre">carregar_sessao</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/carrinho.html#carregar_sessao"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carrinho.carregar_sessao" title="Link to this definition">¶</a></dt>
+<dd><p>Carrega a sessão do utilizador a partir do ficheiro JSON.</p>
+<p>O ficheiro de sessão é definido pela constante <code class="docutils literal notranslate"><span class="pre">SESSAO_PATH</span></code>.
+Caso o ficheiro não exista ou ocorra algum erro na leitura/parse,
+a função devolve <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dicionário com os dados da sessão
+(por exemplo, <code class="docutils literal notranslate"><span class="pre">{&quot;id&quot;:</span> <span class="pre">...,</span> <span class="pre">&quot;nome&quot;:</span> <span class="pre">...}</span></code>) ou <code class="docutils literal notranslate"><span class="pre">None</span></code>
+se não for possível carregar a sessão.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="carrinho.finalizar_carrinho">
+<span class="sig-prename descclassname"><span class="pre">carrinho.</span></span><span class="sig-name descname"><span class="pre">finalizar_carrinho</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">carrinho_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/carrinho.html#finalizar_carrinho"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carrinho.finalizar_carrinho" title="Link to this definition">¶</a></dt>
+<dd><p>Finaliza a compra do carrinho atual.</p>
+<ul class="simple">
+<li><p>Obtém todos os itens do carrinho.</p></li>
+<li><p>Regista cada unidade comprada na tabela <code class="docutils literal notranslate"><span class="pre">compras</span></code>.</p></li>
+<li><p>Calcula o total da compra.</p></li>
+<li><p>Gera uma tabela de resumo (HTML e terminal).</p></li>
+<li><p>Marca o carrinho como inativo (<code class="docutils literal notranslate"><span class="pre">ativo</span> <span class="pre">=</span> <span class="pre">False</span></code>).</p></li>
+</ul>
+<p>Mostra no terminal um resumo da compra, incluindo lista
+de produtos, total pago e data/hora da compra.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>carrinho_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do carrinho a finalizar.</p></li>
+<li><p><strong>user_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do utilizador que está a comprar.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A função atua sobre a base de dados e o terminal,
+não devolvendo valor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="carrinho.historico_compras">
+<span class="sig-prename descclassname"><span class="pre">carrinho.</span></span><span class="sig-name descname"><span class="pre">historico_compras</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/carrinho.html#historico_compras"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carrinho.historico_compras" title="Link to this definition">¶</a></dt>
+<dd><p>Mostra o histórico simples de compras do utilizador.</p>
+<p>Lista cada compra individual (uma linha por entrada na tabela
+<code class="docutils literal notranslate"><span class="pre">compras</span></code>), com o produto, plataforma, preço e data/hora.</p>
+<p>A informação é mostrada no terminal numa tabela formatada.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do utilizador na base de dados.</p></li>
+<li><p><strong>nome</strong> (<em>str</em>) – Nome do utilizador para exibição na UI.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="carrinho.historico_detalhado">
+<span class="sig-prename descclassname"><span class="pre">carrinho.</span></span><span class="sig-name descname"><span class="pre">historico_detalhado</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/carrinho.html#historico_detalhado"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carrinho.historico_detalhado" title="Link to this definition">¶</a></dt>
+<dd><p>Mostra o histórico detalhado de compras do utilizador.</p>
+<p>Agrupa as compras por produto, mostrando:
+- Nome do produto
+- Plataforma
+- Quantidade total adquirida
+- Preço unitário
+- Subtotal por produto</p>
+<p>A informação é mostrada no terminal numa tabela formatada.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do utilizador na base de dados.</p></li>
+<li><p><strong>nome</strong> (<em>str</em>) – Nome do utilizador para exibição na UI.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="carrinho.listar_itens">
+<span class="sig-prename descclassname"><span class="pre">carrinho.</span></span><span class="sig-name descname"><span class="pre">listar_itens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">carrinho_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/carrinho.html#listar_itens"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carrinho.listar_itens" title="Link to this definition">¶</a></dt>
+<dd><p>Lista os itens atuais de um carrinho.</p>
+<p>Busca os itens na tabela <code class="docutils literal notranslate"><span class="pre">itens_carrinho</span></code> e, para cada item,
+consulta os dados do produto na tabela <code class="docutils literal notranslate"><span class="pre">produtos</span></code> (nome).
+Calcula também o total de cada linha (quantidade * preço unitário).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>carrinho_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do carrinho cujos itens
+devem ser listados.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Lista de dicionários com as chaves:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nome</span></code> (str): Nome do produto.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">quantidade</span></code> (int): Quantidade do produto.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">preco_unitario</span></code> (float): Preço unitário.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">total</span></code> (float): Total da linha (quantidade * preço_unitário).</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="carrinho.menu_compras">
+<span class="sig-prename descclassname"><span class="pre">carrinho.</span></span><span class="sig-name descname"><span class="pre">menu_compras</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/carrinho.html#menu_compras"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carrinho.menu_compras" title="Link to this definition">¶</a></dt>
+<dd><p>Menu principal de compras/carrinho na interface de linha de comando.</p>
+<dl>
+<dt>Este menu permite ao utilizador:</dt><dd><ol class="arabic simple">
+<li><p>Adicionar produto ao carrinho.</p></li>
+<li><p>Ver carrinho atual.</p></li>
+<li><p>Remover item do carrinho.</p></li>
+<li><p>Finalizar compra.</p></li>
+<li><p>Ver histórico simples de compras.</p></li>
+</ol>
+<p>6. Ver histórico detalhado de compras.
+0. Voltar (sair do menu).</p>
+</dd>
+</dl>
+<p>A função depende de uma sessão válida, carregada a partir
+do ficheiro <code class="docutils literal notranslate"><span class="pre">sessao.json</span></code>. Caso não exista sessão, o
+utilizador é informado de que precisa fazer login.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A função é interativa e não devolve valor.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="carrinho.notificar">
+<span class="sig-prename descclassname"><span class="pre">carrinho.</span></span><span class="sig-name descname"><span class="pre">notificar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tipo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'info'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/carrinho.html#notificar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carrinho.notificar" title="Link to this definition">¶</a></dt>
+<dd><p>Mostra uma mensagem colorida no terminal.</p>
+<p>A cor é escolhida com base no tipo de notificação:
+<code class="docutils literal notranslate"><span class="pre">info</span></code>, <code class="docutils literal notranslate"><span class="pre">sucesso</span></code>, <code class="docutils literal notranslate"><span class="pre">erro</span></code> ou <code class="docutils literal notranslate"><span class="pre">alerta</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>msg</strong> (<em>str</em>) – Texto da mensagem a apresentar.</p></li>
+<li><p><strong>tipo</strong> (<em>str</em><em>, </em><em>optional</em>) – Tipo de mensagem. Pode ser
+<code class="docutils literal notranslate"><span class="pre">&quot;info&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;sucesso&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;erro&quot;</span></code> ou <code class="docutils literal notranslate"><span class="pre">&quot;alerta&quot;</span></code>.
+Por omissão é <code class="docutils literal notranslate"><span class="pre">&quot;info&quot;</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="carrinho.obter_ou_criar_carrinho">
+<span class="sig-prename descclassname"><span class="pre">carrinho.</span></span><span class="sig-name descname"><span class="pre">obter_ou_criar_carrinho</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/carrinho.html#obter_ou_criar_carrinho"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carrinho.obter_ou_criar_carrinho" title="Link to this definition">¶</a></dt>
+<dd><p>Obtém o carrinho ativo do utilizador ou cria um novo.</p>
+<p>Procura um registo na tabela <code class="docutils literal notranslate"><span class="pre">carrinhos</span></code> com o campo
+<code class="docutils literal notranslate"><span class="pre">ativo</span> <span class="pre">=</span> <span class="pre">True</span></code> para o <code class="docutils literal notranslate"><span class="pre">user_id</span></code> fornecido. Se existir,
+devolve o <code class="docutils literal notranslate"><span class="pre">id</span></code> desse carrinho. Caso contrário, cria um
+novo carrinho ativo para o utilizador.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>user_id</strong> (<em>str</em><em> | </em><em>int</em>) – Identificador do utilizador
+na base de dados.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ID do carrinho ativo associado ao utilizador.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int | str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="carrinho.remover_item">
+<span class="sig-prename descclassname"><span class="pre">carrinho.</span></span><span class="sig-name descname"><span class="pre">remover_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">carrinho_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">produto_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/carrinho.html#remover_item"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carrinho.remover_item" title="Link to this definition">¶</a></dt>
+<dd><p>Remove um item específico do carrinho.</p>
+<p>Apaga da tabela <code class="docutils literal notranslate"><span class="pre">itens_carrinho</span></code> o registo que corresponde
+ao par (carrinho_id, produto_id).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>carrinho_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do carrinho.</p></li>
+<li><p><strong>produto_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do produto a remover do carrinho.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="auth.html">auth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">carrinho module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#carrinho.adicionar_item"><code class="docutils literal notranslate"><span class="pre">adicionar_item()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#carrinho.calcular_total"><code class="docutils literal notranslate"><span class="pre">calcular_total()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#carrinho.carregar_sessao"><code class="docutils literal notranslate"><span class="pre">carregar_sessao()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#carrinho.finalizar_carrinho"><code class="docutils literal notranslate"><span class="pre">finalizar_carrinho()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#carrinho.historico_compras"><code class="docutils literal notranslate"><span class="pre">historico_compras()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#carrinho.historico_detalhado"><code class="docutils literal notranslate"><span class="pre">historico_detalhado()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#carrinho.listar_itens"><code class="docutils literal notranslate"><span class="pre">listar_itens()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#carrinho.menu_compras"><code class="docutils literal notranslate"><span class="pre">menu_compras()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#carrinho.notificar"><code class="docutils literal notranslate"><span class="pre">notificar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#carrinho.obter_ou_criar_carrinho"><code class="docutils literal notranslate"><span class="pre">obter_ou_criar_carrinho()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#carrinho.remover_item"><code class="docutils literal notranslate"><span class="pre">remover_item()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compras.html">compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos.html">produtos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">ui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="avaliacoes.html" title="previous chapter">avaliacoes module</a></li>
+      <li>Next: <a href="clientes.html" title="next chapter">clientes module</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/carrinho.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

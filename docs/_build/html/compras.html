@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>compras module &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="db module" href="db.html" />
+    <link rel="prev" title="comparar_jogos module" href="comparar_jogos.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-compras">
+<span id="compras-module"></span><h1>compras module<a class="headerlink" href="#module-compras" title="Link to this heading">¶</a></h1>
+<p>Módulo de fluxo de compras em terminal.</p>
+<p>Este módulo orquestra o fluxo de compras do utilizador na aplicação de terminal:
+- gestão de carrinho (listar, adicionar, remover, finalizar),
+- listagem de produtos com busca simples e <strong>busca avançada</strong> (plataforma, faixa de preço e ordenação),
+- histórico de compras,
+- e, para administradores, visão agregada de compras e top de produtos.</p>
+<p>Integrações:
+- Base de dados via Supabase (tabelas: <cite>produtos</cite>, <cite>compras</cite>);
+- UI utilitária (cabeçalho/rodapé/animações) e mensagens coloridas no terminal.</p>
+<p>Nota: Este módulo não gere autenticação; a sessão do utilizador é lida de <cite>sessao.json</cite>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="compras.adicionar_via_busca_avancada">
+<span class="sig-prename descclassname"><span class="pre">compras.</span></span><span class="sig-name descname"><span class="pre">adicionar_via_busca_avancada</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">carrinho_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/compras.html#adicionar_via_busca_avancada"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#compras.adicionar_via_busca_avancada" title="Link to this definition">¶</a></dt>
+<dd><p>Executa a busca avançada de produtos e adiciona um item ao carrinho.</p>
+<dl class="simple">
+<dt>Filtros suportados:</dt><dd><ul class="simple">
+<li><p>Nome (ilike)</p></li>
+<li><p>Plataforma(s) (uma ou várias, separadas por vírgula)</p></li>
+<li><p>Preço mínimo/máximo (ambos opcionais; aceitam vírgula ou ponto)</p></li>
+<li><p>Ordenação por <cite>preco</cite>, <cite>nome</cite> ou <cite>stock</cite> nas direções asc/desc</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>carrinho_id</strong> (<em>int</em><em> | </em><em>str</em>) – Identificador do carrinho atual.</p></li>
+<li><p><strong>user_id</strong> (<em>str</em>) – Identificador do utilizador (não é usado no filtro, mas mantido por coerência).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Consulta <cite>public.produtos</cite> via Supabase.</p></li>
+<li><p>Imprime tabela de resultados (<cite>tabulate</cite>).</p></li>
+<li><p>Solicita seleção/quantidade e chama <cite>adicionar_item(…)</cite>.</p></li>
+<li><p>Apresenta mensagens de estado/erro no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compras.carregar_sessao">
+<span class="sig-prename descclassname"><span class="pre">compras.</span></span><span class="sig-name descname"><span class="pre">carregar_sessao</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/compras.html#carregar_sessao"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#compras.carregar_sessao" title="Link to this definition">¶</a></dt>
+<dd><p>Lê os dados da sessão de utilizador a partir de <cite>sessao.json</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>Dicionário com atributos mínimos esperados:</dt><dd><ul class="simple">
+<li><p>id (str): ID do utilizador;</p></li>
+<li><p>nome (str): Nome a apresentar no cabeçalho;</p></li>
+<li><p>tipo (str): ‘cliente’ ou ‘admin’.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Retorna <cite>None</cite> se o ficheiro não existir ou estiver inválido.</p>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compras.historico_simples">
+<span class="sig-prename descclassname"><span class="pre">compras.</span></span><span class="sig-name descname"><span class="pre">historico_simples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/compras.html#historico_simples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#compras.historico_simples" title="Link to this definition">¶</a></dt>
+<dd><p>Mostra uma tabela simples das compras do utilizador.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_id</strong> (<em>str</em>) – Identificador do utilizador atual.</p></li>
+<li><p><strong>nome</strong> (<em>str</em>) – Nome do utilizador para UI.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Lê <cite>compras</cite> por <cite>user_id</cite> e nomes dos produtos.</p></li>
+<li><p>Imprime uma tabela (<cite>Produto</cite> x <cite>Data</cite>) no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compras.menu_compras">
+<span class="sig-prename descclassname"><span class="pre">compras.</span></span><span class="sig-name descname"><span class="pre">menu_compras</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/compras.html#menu_compras"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#compras.menu_compras" title="Link to this definition">¶</a></dt>
+<dd><p>Loop principal do menu de compras (interface de terminal).</p>
+<dl class="simple">
+<dt>Pré-condições:</dt><dd><ul class="simple">
+<li><p><cite>sessao.json</cite> deve existir e conter <cite>id</cite>, <cite>nome</cite>, <cite>tipo</cite>.</p></li>
+</ul>
+</dd>
+<dt>Fluxos:</dt><dd><ol class="arabic simple">
+<li><p>Listar produtos</p></li>
+<li><p>Adicionar ao carrinho (busca simples <strong>ou</strong> avançada)</p></li>
+<li><p>Ver carrinho</p></li>
+<li><p>Remover item</p></li>
+<li><p>Finalizar compra</p></li>
+<li><p>Ver histórico simples</p></li>
+<li><p>Ver histórico detalhado</p></li>
+<li><p>(admin) Ver todas as compras</p></li>
+<li><p>(admin) Top produtos</p></li>
+</ol>
+</dd>
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Interações no terminal, chamadas à BD e mudanças no estado do carrinho.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compras.notificar">
+<span class="sig-prename descclassname"><span class="pre">compras.</span></span><span class="sig-name descname"><span class="pre">notificar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tipo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'info'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/compras.html#notificar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#compras.notificar" title="Link to this definition">¶</a></dt>
+<dd><p>Apresenta uma mensagem colorida e com ícone no terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>msg</strong> (<em>str</em>) – Texto da mensagem a apresentar.</p></li>
+<li><p><strong>tipo</strong> (<em>str</em>) – Nível da mensagem. Aceita: ‘info’, ‘sucesso’, ‘erro’, ‘alerta’.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Imprime no terminal com estilos do <cite>colorama</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compras.produtos_mais_comprados">
+<span class="sig-prename descclassname"><span class="pre">compras.</span></span><span class="sig-name descname"><span class="pre">produtos_mais_comprados</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/compras.html#produtos_mais_comprados"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#compras.produtos_mais_comprados" title="Link to this definition">¶</a></dt>
+<dd><p>Exibe o top de produtos por contagem de compras (admin).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nome</strong> (<em>str</em>) – Nome do utilizador (admin) para UI.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Conta ocorrências de <cite>produto_id</cite> em <cite>compras</cite>.</p></li>
+<li><p>Resolve nomes dos produtos e imprime ranking no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compras.recomendar_produto">
+<span class="sig-prename descclassname"><span class="pre">compras.</span></span><span class="sig-name descname"><span class="pre">recomendar_produto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/compras.html#recomendar_produto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#compras.recomendar_produto" title="Link to this definition">¶</a></dt>
+<dd><p>Sugere um produto com base na última compra do utilizador.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>user_id</strong> (<em>str</em>) – Identificador do utilizador.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Lê a última compra em <cite>compras</cite>.</p></li>
+<li><p>Busca nome do produto em <cite>produtos</cite>.</p></li>
+<li><p>Imprime uma sugestão no terminal (mensagem informativa).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="compras.ver_todas_compras">
+<span class="sig-prename descclassname"><span class="pre">compras.</span></span><span class="sig-name descname"><span class="pre">ver_todas_compras</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/compras.html#ver_todas_compras"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#compras.ver_todas_compras" title="Link to this definition">¶</a></dt>
+<dd><p>Mostra uma lista agregada de todas as compras (admin).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nome</strong> (<em>str</em>) – Nome do utilizador (admin) para UI.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Lê <cite>compras</cite> e resolve nomes de produto.</p></li>
+<li><p>Imprime tabela (<cite>Utilizador</cite>, <cite>Produto</cite>, <cite>Data</cite>) no terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="auth.html">auth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">compras module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#compras.adicionar_via_busca_avancada"><code class="docutils literal notranslate"><span class="pre">adicionar_via_busca_avancada()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compras.carregar_sessao"><code class="docutils literal notranslate"><span class="pre">carregar_sessao()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compras.historico_simples"><code class="docutils literal notranslate"><span class="pre">historico_simples()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compras.menu_compras"><code class="docutils literal notranslate"><span class="pre">menu_compras()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compras.notificar"><code class="docutils literal notranslate"><span class="pre">notificar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compras.produtos_mais_comprados"><code class="docutils literal notranslate"><span class="pre">produtos_mais_comprados()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compras.recomendar_produto"><code class="docutils literal notranslate"><span class="pre">recomendar_produto()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compras.ver_todas_compras"><code class="docutils literal notranslate"><span class="pre">ver_todas_compras()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos.html">produtos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">ui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="comparar_jogos.html" title="previous chapter">comparar_jogos module</a></li>
+      <li>Next: <a href="db.html" title="next chapter">db module</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/compras.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

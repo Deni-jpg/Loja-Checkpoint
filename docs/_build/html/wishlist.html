@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>wishlist module &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="ui module" href="ui.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-wishlist">
+<span id="wishlist-module"></span><h1>wishlist module<a class="headerlink" href="#module-wishlist" title="Link to this heading">¶</a></h1>
+<p>Módulo de gestão da Wishlist da Loja Checkpoint.</p>
+<dl class="simple">
+<dt>Este módulo permite ao utilizador autenticado:</dt><dd><ul class="simple">
+<li><p>Gerir a sessão local (ficheiro <code class="docutils literal notranslate"><span class="pre">sessao.json</span></code>).</p></li>
+<li><p>Adicionar produtos à wishlist.</p></li>
+<li><p>Ver os itens atuais da wishlist.</p></li>
+<li><p>Remover produtos da wishlist.</p></li>
+<li><p>Interagir através de um menu de terminal.</p></li>
+</ul>
+</dd>
+</dl>
+<p>A wishlist é armazenada na tabela <code class="docutils literal notranslate"><span class="pre">wishlist</span></code> da base de dados Supabase,
+relacionando utilizadores (<code class="docutils literal notranslate"><span class="pre">user_id</span></code>) com produtos (<code class="docutils literal notranslate"><span class="pre">produto_id</span></code>).</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="wishlist.SESSAO_PATH">
+<span class="sig-prename descclassname"><span class="pre">wishlist.</span></span><span class="sig-name descname"><span class="pre">SESSAO_PATH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">WindowsPath('C:/Users/a89828/Desktop/Loja-Checkpoint/docs/../sessao.json')</span></span><a class="headerlink" href="#wishlist.SESSAO_PATH" title="Link to this definition">¶</a></dt>
+<dd><p>Caminho para o ficheiro de sessão local do utilizador.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pathlib.Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="wishlist.adicionar_produto_wishlist">
+<span class="sig-prename descclassname"><span class="pre">wishlist.</span></span><span class="sig-name descname"><span class="pre">adicionar_produto_wishlist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wishlist.html#adicionar_produto_wishlist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#wishlist.adicionar_produto_wishlist" title="Link to this definition">¶</a></dt>
+<dd><p>Adiciona um produto à wishlist do utilizador.</p>
+<dl class="simple">
+<dt>Fluxo:</dt><dd><ol class="arabic simple">
+<li><p>Pede ao utilizador para escrever parte do nome do produto.</p></li>
+<li><p>Pesquisa produtos na tabela <code class="docutils literal notranslate"><span class="pre">produtos</span></code> com base no termo.</p></li>
+<li><p>Lista os resultados encontrados.</p></li>
+<li><p>Permite selecionar um produto pelo número.</p></li>
+<li><p>Verifica se o produto já existe na wishlist.</p></li>
+<li><p>Caso não exista, insere o registo na tabela <code class="docutils literal notranslate"><span class="pre">wishlist</span></code>.</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do utilizador na base de dados.</p></li>
+<li><p><strong>nome</strong> (<em>str</em>) – Nome do utilizador (usado na interface).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A função interage via terminal e base de dados, sem devolver valor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="wishlist.carregar_sessao">
+<span class="sig-prename descclassname"><span class="pre">wishlist.</span></span><span class="sig-name descname"><span class="pre">carregar_sessao</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/wishlist.html#carregar_sessao"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#wishlist.carregar_sessao" title="Link to this definition">¶</a></dt>
+<dd><p>Carrega a sessão do utilizador a partir do ficheiro <code class="docutils literal notranslate"><span class="pre">sessao.json</span></code>.</p>
+<p>Tenta ler o ficheiro definido em <a class="reference internal" href="#wishlist.SESSAO_PATH" title="wishlist.SESSAO_PATH"><code class="xref py py-data docutils literal notranslate"><span class="pre">SESSAO_PATH</span></code></a> e fazer o parse
+do respetivo conteúdo JSON.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dicionário com os dados da sessão
+(por exemplo, <code class="docutils literal notranslate"><span class="pre">{&quot;id&quot;:</span> <span class="pre">...,</span> <span class="pre">&quot;nome&quot;:</span> <span class="pre">...}</span></code>) ou <code class="docutils literal notranslate"><span class="pre">None</span></code> se o
+ficheiro não existir ou ocorrer um erro na leitura.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="wishlist.menu_wishlist">
+<span class="sig-prename descclassname"><span class="pre">wishlist.</span></span><span class="sig-name descname"><span class="pre">menu_wishlist</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/wishlist.html#menu_wishlist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#wishlist.menu_wishlist" title="Link to this definition">¶</a></dt>
+<dd><p>Menu principal de gestão da wishlist.</p>
+<p>Requer que o utilizador esteja autenticado (sessão válida).</p>
+<dl>
+<dt>Opções:</dt><dd><ol class="arabic simple">
+<li><p>Adicionar produto à wishlist.</p></li>
+<li><p>Ver wishlist.</p></li>
+</ol>
+<p>3. Remover produto da wishlist.
+0. Voltar (sair do menu).</p>
+</dd>
+</dl>
+<p>A função é interativa (inputs/prints) e não devolve valor.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="wishlist.notificar">
+<span class="sig-prename descclassname"><span class="pre">wishlist.</span></span><span class="sig-name descname"><span class="pre">notificar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mensagem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tipo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'info'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wishlist.html#notificar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#wishlist.notificar" title="Link to this definition">¶</a></dt>
+<dd><p>Mostra uma notificação colorida no terminal.</p>
+<dl class="simple">
+<dt>As cores variam consoante o tipo de mensagem:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">info</span></code> → ciano</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sucesso</span></code> → verde</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">erro</span></code> → vermelho</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">alerta</span></code> → amarelo</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mensagem</strong> (<em>str</em>) – Texto a apresentar.</p></li>
+<li><p><strong>tipo</strong> (<em>str</em><em>, </em><em>optional</em>) – Tipo de notificação. Pode ser
+<code class="docutils literal notranslate"><span class="pre">&quot;info&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;sucesso&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;erro&quot;</span></code> ou <code class="docutils literal notranslate"><span class="pre">&quot;alerta&quot;</span></code>.
+Por omissão é <code class="docutils literal notranslate"><span class="pre">&quot;info&quot;</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="wishlist.remover_produto_wishlist">
+<span class="sig-prename descclassname"><span class="pre">wishlist.</span></span><span class="sig-name descname"><span class="pre">remover_produto_wishlist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wishlist.html#remover_produto_wishlist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#wishlist.remover_produto_wishlist" title="Link to this definition">¶</a></dt>
+<dd><p>Remove um ou mais produtos da wishlist do utilizador.</p>
+<dl class="simple">
+<dt>O utilizador escreve parte do nome do produto, e são:</dt><dd><ul class="simple">
+<li><p>Procurados produtos na tabela <code class="docutils literal notranslate"><span class="pre">produtos</span></code> com nome semelhante.</p></li>
+<li><p>Removidas todas as entradas correspondentes aos IDs encontrados
+na tabela <code class="docutils literal notranslate"><span class="pre">wishlist</span></code> para o utilizador atual.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do utilizador.</p></li>
+<li><p><strong>nome</strong> (<em>str</em>) – Nome do utilizador para exibição na interface.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A função apenas atualiza a base de dados e mostra mensagens
+no terminal.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="wishlist.ver_wishlist">
+<span class="sig-prename descclassname"><span class="pre">wishlist.</span></span><span class="sig-name descname"><span class="pre">ver_wishlist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wishlist.html#ver_wishlist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#wishlist.ver_wishlist" title="Link to this definition">¶</a></dt>
+<dd><p>Mostra os itens atuais da wishlist do utilizador.</p>
+<dl class="simple">
+<dt>Para cada item na tabela <code class="docutils literal notranslate"><span class="pre">wishlist</span></code>:</dt><dd><ul class="simple">
+<li><p>Obtém os dados do produto na tabela <code class="docutils literal notranslate"><span class="pre">produtos</span></code>.</p></li>
+<li><p>Mostra nome, plataforma e preço.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_id</strong> (<em>int</em><em> | </em><em>str</em>) – ID do utilizador.</p></li>
+<li><p><strong>nome</strong> (<em>str</em>) – Nome do utilizador para exibição na interface.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Apenas imprime a lista no terminal.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="auth.html">auth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="avaliacoes.html">avaliacoes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compras.html">compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos.html">produtos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">ui module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">wishlist module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#wishlist.SESSAO_PATH"><code class="docutils literal notranslate"><span class="pre">SESSAO_PATH</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wishlist.adicionar_produto_wishlist"><code class="docutils literal notranslate"><span class="pre">adicionar_produto_wishlist()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wishlist.carregar_sessao"><code class="docutils literal notranslate"><span class="pre">carregar_sessao()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wishlist.menu_wishlist"><code class="docutils literal notranslate"><span class="pre">menu_wishlist()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wishlist.notificar"><code class="docutils literal notranslate"><span class="pre">notificar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wishlist.remover_produto_wishlist"><code class="docutils literal notranslate"><span class="pre">remover_produto_wishlist()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wishlist.ver_wishlist"><code class="docutils literal notranslate"><span class="pre">ver_wishlist()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ui.html" title="previous chapter">ui module</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/wishlist.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

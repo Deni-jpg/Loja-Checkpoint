@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>avaliacoes module &#8212; Loja-Checkpoint  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="carrinho module" href="carrinho.html" />
+    <link rel="prev" title="auth module" href="auth.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-avaliacoes">
+<span id="avaliacoes-module"></span><h1>avaliacoes module<a class="headerlink" href="#module-avaliacoes" title="Link to this heading">¶</a></h1>
+<p>Módulo de avaliações de produtos (terminal).</p>
+<p>Funcionalidades:
+- Cliente avalia um produto comprado (1 a 5 estrelas + comentário opcional).
+- Visualização de médias por produto com representação em estrelas.
+- Menu de avaliações (cliente e admin) integrando com UI em terminal.</p>
+<p>Dependências:
+- Supabase (tabelas: <cite>produtos</cite>, <cite>compras</cite>, <cite>avaliacoes</cite>)
+- Utilitários de UI (cabecalho, rodape, limpar_terminal, animar_carregamento)
+- <cite>colorama</cite> e <cite>tabulate</cite> para visualização amigável.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="avaliacoes.avaliar_produto">
+<span class="sig-prename descclassname"><span class="pre">avaliacoes.</span></span><span class="sig-name descname"><span class="pre">avaliar_produto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/avaliacoes.html#avaliar_produto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#avaliacoes.avaliar_produto" title="Link to this definition">¶</a></dt>
+<dd><p>Permite ao utilizador avaliar um produto que já tenha comprado.</p>
+<dl class="simple">
+<dt>Fluxo:</dt><dd><ul class="simple">
+<li><p>Busca produtos por termo (ilike no nome).</p></li>
+<li><p>Valida se o utilizador comprou o produto selecionado.</p></li>
+<li><p>Upsert em <cite>avaliacoes</cite> com estrelas (1–5) e comentário opcional.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_id</strong> (<em>str</em>) – ID do utilizador autenticado.</p></li>
+<li><p><strong>nome</strong> (<em>str</em>) – Nome do utilizador (UI).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Lê tabelas <cite>produtos</cite> e <cite>compras</cite>.</p></li>
+<li><p>Grava/atualiza registo em <cite>avaliacoes</cite>.</p></li>
+<li><p>Interação completa via terminal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="avaliacoes.carregar_sessao">
+<span class="sig-prename descclassname"><span class="pre">avaliacoes.</span></span><span class="sig-name descname"><span class="pre">carregar_sessao</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/avaliacoes.html#carregar_sessao"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#avaliacoes.carregar_sessao" title="Link to this definition">¶</a></dt>
+<dd><p>Carrega a sessão do utilizador a partir do ficheiro local <cite>sessao.json</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dicionário com chaves esperadas (<cite>id</cite>, <cite>nome</cite>, <cite>tipo</cite>) ou <cite>None</cite>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="avaliacoes.menu_avaliacoes">
+<span class="sig-prename descclassname"><span class="pre">avaliacoes.</span></span><span class="sig-name descname"><span class="pre">menu_avaliacoes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/avaliacoes.html#menu_avaliacoes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#avaliacoes.menu_avaliacoes" title="Link to this definition">¶</a></dt>
+<dd><p>Loop de menu para funcionalidades de avaliação.</p>
+<dl class="simple">
+<dt>Comportamento:</dt><dd><ul class="simple">
+<li><p>Se não houver sessão válida, informa e retorna ao chamador.</p></li>
+<li><p>Para clientes: permite avaliar produto e ver médias.</p></li>
+<li><p>Para admin: mostra diretamente as médias.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="avaliacoes.notificar">
+<span class="sig-prename descclassname"><span class="pre">avaliacoes.</span></span><span class="sig-name descname"><span class="pre">notificar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mensagem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tipo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'info'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/avaliacoes.html#notificar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#avaliacoes.notificar" title="Link to this definition">¶</a></dt>
+<dd><p>Apresenta uma notificação colorida no terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mensagem</strong> (<em>str</em>) – Texto a mostrar.</p></li>
+<li><p><strong>tipo</strong> (<em>str</em>) – ‘info’, ‘sucesso’, ‘erro’ ou ‘alerta’.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Imprime no terminal usando <cite>colorama</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="avaliacoes.render_stars">
+<span class="sig-prename descclassname"><span class="pre">avaliacoes.</span></span><span class="sig-name descname"><span class="pre">render_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">media</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/avaliacoes.html#render_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#avaliacoes.render_stars" title="Link to this definition">¶</a></dt>
+<dd><p>Converte um valor float (1.0–5.0) numa barra de estrelas legível.</p>
+<dl class="simple">
+<dt>Exemplo:</dt><dd><p>4.5 -&gt; “⭐⭐⭐⭐✩” (✩ como meia estrela)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>media</strong> (<em>float</em>) – Média calculada do produto (0–5).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>String com estrelas cheias e vazias.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="avaliacoes.ver_media_avaliacoes">
+<span class="sig-prename descclassname"><span class="pre">avaliacoes.</span></span><span class="sig-name descname"><span class="pre">ver_media_avaliacoes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/avaliacoes.html#ver_media_avaliacoes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#avaliacoes.ver_media_avaliacoes" title="Link to this definition">¶</a></dt>
+<dd><p>Apresenta uma tabela com médias de avaliação por produto.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nome</strong> (<em>str</em>) – Nome do utilizador para UI (cliente/admin).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><ul class="simple">
+<li><p>Lê <cite>produtos</cite> e <cite>avaliacoes</cite>.</p></li>
+<li><p>Calcula média e total de avaliações por produto.</p></li>
+<li><p>Imprime tabela com estrelas e estatísticas.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Loja-Checkpoint</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="auth.html">auth module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">avaliacoes module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#avaliacoes.avaliar_produto"><code class="docutils literal notranslate"><span class="pre">avaliar_produto()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#avaliacoes.carregar_sessao"><code class="docutils literal notranslate"><span class="pre">carregar_sessao()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#avaliacoes.menu_avaliacoes"><code class="docutils literal notranslate"><span class="pre">menu_avaliacoes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#avaliacoes.notificar"><code class="docutils literal notranslate"><span class="pre">notificar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#avaliacoes.render_stars"><code class="docutils literal notranslate"><span class="pre">render_stars()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#avaliacoes.ver_media_avaliacoes"><code class="docutils literal notranslate"><span class="pre">ver_media_avaliacoes()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="carrinho.html">carrinho module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clientes.html">clientes module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comentarios.html">comentarios module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparar_jogos.html">comparar_jogos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compras.html">compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="db.html">db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="historico_compras.html">historico_compras module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notificacao_email.html">notificacao_email module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos.html">produtos module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="produtos_utils.html">produtos_utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">ui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wishlist.html">wishlist module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="auth.html" title="previous chapter">auth module</a></li>
+      <li>Next: <a href="carrinho.html" title="next chapter">carrinho module</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Author.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/avaliacoes.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
